@@ -1,11 +1,27 @@
+expt = "two.path"
+
+set.seed(1)
+
+if(expt == "one.path") {
 data = matrix(c(0,0,1,
                 0,1,1,
-                1,1,1), ncol=3, nrow=3)
+                1,1,1), byrow = TRUE, ncol=3, nrow=3)
 # create random phylogeny
 tree = ape::rphylo(3, 1, 1)
+} else if(expt == "two.path") {
+data = matrix(c(0,0,1,
+                0,1,1,
+                1,1,1,
+                1,0,0,
+                1,1,0,
+                1,1,1), byrow = TRUE, ncol=3, nrow=6)
+
+# create random phylogeny
+tree = ape::rphylo(6, 1, 1)
+}
 
 fit.mk = hyperinf(data, method="hypermk")
-fit.hhmm = hyperinf(data, method="hyperhmm", nboot=0)
+fit.hhmm = hyperinf(data, method="hyperhmm")
 fit.dags = hyperinf(data, method="hyperdags")
 fit.hct = hyperinf(data, method="hypertraps")
 fit.pli = hyperinf(data, method="pli")
@@ -18,7 +34,7 @@ ggpubr::ggarrange(plot_hyperinf(fit.mk),plot_hyperinf(fit.hhmm),
 
 
 fit.tree.mk = hyperinf(data, tree, method="hypermk")
-fit.tree.hhmm = hyperinf(data, tree, method="hyperhmm", nboot=0)
+fit.tree.hhmm = hyperinf(data, tree, method="hyperhmm")
 fit.tree.dags = hyperinf(data, tree, method="hyperdags")
 fit.tree.hct = hyperinf(data, tree, method="hypertraps")
 ggpubr::ggarrange(plot_hyperinf(fit.tree.mk),plot_hyperinf(fit.tree.hhmm),
