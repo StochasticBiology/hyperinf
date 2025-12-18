@@ -216,6 +216,7 @@ plot_hyperinf = function(fit, plot.type = "") {
     return(ggplot2::ggplot())
   }
 
+  reversible = FALSE
   if(plot.type == "native") {
     if(fit.type == "mk") {
       out.plot = hypermk::mk.inference.plot(fit)
@@ -232,7 +233,6 @@ plot_hyperinf = function(fit, plot.type = "") {
   } else {
     if(fit.type %in% c("mk", "hyperhmm", "hypertraps")) {
       # our goal is now to get a From/To/Flux dataframe and eventually a graph to plot
-      reversible = FALSE
       if(fit.type == "mk") {
         fluxes = fit$mk_fluxes
         fluxes$Flux = fluxes$Flux/sum(fluxes$Flux[fluxes$From == 0])
