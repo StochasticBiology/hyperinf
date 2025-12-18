@@ -194,6 +194,7 @@ hyperinf <- function(data,
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
 #' @param plot.type A character string, either empty (default) to allow standardised plot, or "native" to produce plots from the source algorithm
+#' @param threshold Double (default 0.05), probability flux below which edges will not be plotted
 #'
 #' @return A ggplot object
 #' @examples
@@ -201,7 +202,9 @@ hyperinf <- function(data,
 #' fit = hyperinf(data)
 #' plot_hyperinf(fit)
 #' @export
-plot_hyperinf = function(fit, plot.type = "") {
+plot_hyperinf = function(fit,
+                         plot.type = "",
+                         threshold = 0.05) {
   if("best.graph" %in% names(fit)) {
     fit.type = "DAG"
   } else if("raw.graph" %in% names(fit)) {
@@ -256,7 +259,7 @@ plot_hyperinf = function(fit, plot.type = "") {
       if(reversible == TRUE) {
         fluxes$label[which(fluxes$From > fluxes$To)] = paste0("-", fluxes$Change[which(fluxes$From > fluxes$To)])
       }
-      fluxes = fluxes[fluxes$Flux > 0.05,]
+      fluxes = fluxes[fluxes$Flux > threshold,]
       states = unique(c(fluxes$From, fluxes$To))
       states.b = unique(c(fluxes$From.b, fluxes$To.b))
       layers = sapply(states.b, stringr::str_count, pattern="1")
