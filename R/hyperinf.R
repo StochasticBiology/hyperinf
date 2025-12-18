@@ -8,38 +8,22 @@ DecToBin <- function(x, len) {
   return(paste(s, collapse=""))
 }
 
-#' Do hypercubic inference on some data
+#' Curate data into a systematic format for inference
 #'
-#' Data can be flexibly supplied as a matrix or data frame, with or without an accompanying phylogeny
-#' describing how observations are related
-#'
-#' Method can be specified: "hypermk", "hyperhmm", "hypertraps", or "hyperdags". If unspecified, the
-#' most detailed approach compatible with the data will be chosen
+#' Data can be flexibly supplied as a matrix or data frame,
 #'
 #' @param data A required matrix or data.frame containing binary observations
-#' @param tree Optional tree object
-#' @param losses Boolean (default FALSE) whether to consider losses rather than gains of features
-#' @param method A character string, either empty (default) to allow automatic choice of algorithm, or one of "hypermk", "hyperhmm", "hypertraps", or "hyperdags"
-#' @param reversible Boolean (default FALSE) whether to allow reversible transitions
-#' @param nboot integer (default 0) number of bootstrap resamples to run (for HyperHMM)
 #'
-#' @return A fitted hypercubic inference object
+#' @return A matrix of observations in a standardised format
 #' @examples
 #' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
-#' fit = hyperinf(data)
+#' mat = clean_data(data)
 #' @export
-hyperinf <- function(data,
-                     tree = NULL,
-                     losses = FALSE,
-                     method = "",
-                     reversible = FALSE,
-                     nboot = 0) {
+clean_data = function(data) {
   # Check input type
   if (!is.matrix(data) && !is.data.frame(data)) {
     stop("`data` must be a matrix or data.frame")
   }
-
-  #XXX TO DO -- MAKE SURE DATA ALIGNS WITH TIPS
 
   # If it's a data.frame, inspect the first column
   if (is.data.frame(data)) {
@@ -63,14 +47,56 @@ hyperinf <- function(data,
   }
 
   # Optionally coerce to numeric if needed
-  # Convert "?" to NA
-  mat[mat == "?"] <- NA
+  # Convert "?" to 2
+  mat[mat == "?"] <- 2
   mat <- apply(mat, 2, function(x) as.numeric(x))
+
+  return(mat)
+}
+
+#' Do hypercubic inference on some data
+#'
+#' Data can be flexibly supplied as a matrix or data frame, with or without an accompanying phylogeny
+#' describing how observations are related
+#'
+#' Method can be specified: "hypermk", "hyperhmm", "hypertraps", "pli", or "hyperdags". If unspecified, the
+#' most detailed approach compatible with the data will be chosen
+#'
+#' @param data A required matrix or data.frame containing binary observations
+#' @param tree Optional tree object
+#' @param losses Boolean (default FALSE) whether to consider losses rather than gains of features
+#' @param method A character string, either empty (default) to allow automatic choice of algorithm, or one of the options in the text above
+#' @param reversible Boolean (default FALSE) whether to allow reversible transitions
+#' @param ... other options to pass to the inference method used. For example, nboot for HyperHMM, length/kernel/walkers for HyperTraPS.
+#'
+#' @return A fitted hypercubic inference object
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' fit = hyperinf(data)
+#' @export
+hyperinf <- function(data,
+                     tree = NULL,
+                     losses = FALSE,
+                     method = "",
+                     reversible = FALSE,
+                     ...) {
+
+
+  # TO DO -- MAKE SURE DATA ALIGNS WITH TIPS
+  #       -- TIMINGS
+  #       -- NOT SURE UNCERTAINTY'S HANDLED RIGHT
+
+  mat = clean_data(data)
 
   if(losses == TRUE) {
     mat = 1-mat
   }
   L = ncol(mat)
+
+  if(!is.null(tree)) {
+    df = cbind(data.frame(ID = tree$tip.label), as.data.frame(mat))
+    c.tree = hypertrapsct::curate.tree(tree, df)
+  }
 
   if(method == "") {
     if(L <= 7 & reversible == TRUE) {
@@ -99,7 +125,7 @@ hyperinf <- function(data,
       message("L > 18 for HyperHMM is untested and may cause memory errors. Consider HyperTraPS. Pausing in case you want to break...")
       Sys.sleep(3)
     }
-    if(!(method %in% c("hypermk", "hyperhmm", "hypertraps", "hyperdags"))) {
+    if(!(method %in% c("hypermk", "hyperhmm", "hypertraps", "hyperdags", "pli"))) {
       message("I didn't recognise that method. Switching to HyperDAGs. Pausing in case you want to break...")
       Sys.sleep(3)
       method = "hyperdags"
@@ -107,8 +133,22 @@ hyperinf <- function(data,
   }
 
   if(!is.null(tree)) {
-    df = cbind(data.frame(ID = tree$tip.label), as.data.frame(mat))
-    c.tree = hypertrapsct::curate.tree(tree, df)
+    if(any(c.tree$srcs == 2) & method != "pli") {
+      message("Only phenotype landscape inference can deal with uncertain ancestors. Switching to PLI. Pausing in case you want to break...")
+      Sys.sleep(3)
+      method = "pli"
+    }
+    if(!any(c.tree$srcs == 2) & any(c.tree$dests == 2) & !(method %in% c("pli", "hypertraps"))) {
+      message("Only HyperTraPS and PLI can deal with uncertain observations. Switching to HyperTraPS. Pausing in case you want to break...")
+      Sys.sleep(3)
+      method = "hypertraps"
+    }
+  } else {
+    if(any(mat == 2) & !(method %in% c("pli", "hypertraps"))) {
+      message("Only HyperTraPS and PLI can deal with uncertain observations. Switching to HyperTraPS. Pausing in case you want to break...")
+      Sys.sleep(3)
+      method = "hypertraps"
+    }
   }
 
   if(method == "hypermk") {
@@ -122,17 +162,22 @@ hyperinf <- function(data,
       identicals = which(apply(c.tree$dests == c.tree$srcs, 1, all))
       dests = c.tree$dests[-identicals,]
       srcs = c.tree$srcs[-identicals,]
-      fit = hyperhmm::HyperHMM(dests, srcs, nboot = nboot)
+      fit = hyperhmm::HyperHMM(dests, srcs, ...)
     } else {
-      fit = hyperhmm::HyperHMM(mat, nboot = nboot)
+      fit = hyperhmm::HyperHMM(mat, ...)
     }
-  } else if(method == "hypertraps") {
+  } else if(method == "hypertraps" | method == "pli") {
+    pli = 0
+    if(method == "pli") {
+      pli = 1
+    }
     if(!is.null(tree)) {
-      fit = hypertrapsct::HyperTraPS(c.tree$dests, c.tree$srcs)
+      fit = hypertrapsct::HyperTraPS(c.tree$dests, c.tree$srcs, pli=pli, ...)
     } else {
-      fit = hypertrapsct::HyperTraPS(mat)
+      fit = hypertrapsct::HyperTraPS(mat, pli=pli, ...)
     }
-  } else if(method == "hyperdags") {
+  }
+  else if(method == "hyperdags") {
     if(!is.null(tree)) {
       srcs = apply(c.tree$srcs, 1, paste0, collapse="")
       dests = apply(c.tree$dests, 1, paste0, collapse="")
@@ -257,6 +302,55 @@ plot_hyperinf = function(fit, plot.type = "") {
         ggraph::theme_graph(base_family="sans")
     }
   }
+  return(out.plot)
+}
+
+#' Plot some data for accumulation modelling
+#'
+#' @param data A required matrix or data.frame containing binary observations
+#' @param tree Optional tree object
+#' @param ... other options to pass to plotHypercube.curated.tree (if tree is provided)
+#'
+#' @return A ggplot object
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' plot_hyperinf_data(data)
+#' @export
+plot_hyperinf_data <- function(data,
+                               tree = NULL,
+                               ...) {
+  mat = clean_data(data)
+
+  if(!is.null(tree)) {
+    df = cbind(data.frame(ID = tree$tip.label), as.data.frame(mat))
+    c.tree = hypertrapsct::curate.tree(tree, df)
+    out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, ...)
+  } else {
+    df <- expand.grid(
+      x = seq_len(ncol(mat)),
+      y = seq_len(nrow(mat))
+    )
+    df$value <- as.vector(mat)
+
+    df$color <- ifelse(
+      df$value == 1, "one",
+      ifelse(df$value == 0, "zero", "other")
+    )
+
+    out.plot = ggplot2::ggplot(df, ggplot2::aes(x, y, fill = color)) +
+      ggplot2::geom_tile() +
+      ggplot2::scale_fill_manual(
+        values = c(
+          one = "black",
+          zero = "white",
+          other = "red"
+        )
+      ) +
+      ggplot2::coord_fixed() +
+      ggplot2::scale_y_reverse() +
+      ggplot2::theme_void() + ggplot2::theme(legend.position="none")
+  }
+
   return(out.plot)
 }
 
