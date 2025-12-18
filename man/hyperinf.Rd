@@ -10,7 +10,7 @@ hyperinf(
   losses = FALSE,
   method = "",
   reversible = FALSE,
-  nboot = 0
+  ...
 )
 }
 \arguments{
@@ -20,11 +20,11 @@ hyperinf(
 
 \item{losses}{Boolean (default FALSE) whether to consider losses rather than gains of features}
 
-\item{method}{A character string, either empty (default) to allow automatic choice of algorithm, or one of "hypermk", "hyperhmm", "hypertraps", or "hyperdags"}
+\item{method}{A character string, either empty (default) to allow automatic choice of algorithm, or one of the options in the text above}
 
 \item{reversible}{Boolean (default FALSE) whether to allow reversible transitions}
 
-\item{nboot}{integer (default 0) number of bootstrap resamples to run (for HyperHMM)}
+\item{...}{other options to pass to the inference method used. For example, nboot for HyperHMM, length/kernel/walkers for HyperTraPS.}
 }
 \value{
 A fitted hypercubic inference object
@@ -34,7 +34,7 @@ Data can be flexibly supplied as a matrix or data frame, with or without an acco
 describing how observations are related
 }
 \details{
-Method can be specified: "hypermk", "hyperhmm", "hypertraps", or "hyperdags". If unspecified, the
+Method can be specified: "hypermk", "hyperhmm", "hypertraps", "pli", or "hyperdags". If unspecified, the
 most detailed approach compatible with the data will be chosen
 }
 \examples{
