@@ -1,6 +1,6 @@
 # hyperinf
 
-An Ecosystem for Hypercubic Inference in Accumulation Modelling
+An Ecosystem for Hypercubic Inference in Evolutionary Accumulation Modelling
 ---
 
 This package brings together HyperTraPS(-CT), HyperHMM, HyperDAGs and HyperMk, different algorithms for accumulation modelling. All are based around the idea of inferring hypercubic transition graphs that describe the accumulation of binary features.
