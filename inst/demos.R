@@ -3,21 +3,21 @@ expt = "two.path"
 set.seed(1)
 
 if(expt == "one.path") {
-data = matrix(c(0,0,1,
-                0,1,1,
-                1,1,1), byrow = TRUE, ncol=3, nrow=3)
-# create random phylogeny
-tree = ape::rphylo(3, 1, 1)
+  data = matrix(c(0,0,1,
+                  0,1,1,
+                  1,1,1), byrow = TRUE, ncol=3, nrow=3)
+  # create random phylogeny
+  tree = ape::rphylo(3, 1, 1)
 } else if(expt == "two.path") {
-data = matrix(c(0,0,1,
-                0,1,1,
-                1,1,1,
-                1,0,0,
-                1,1,0,
-                1,1,1), byrow = TRUE, ncol=3, nrow=6)
-
-# create random phylogeny
-tree = ape::rphylo(6, 1, 1)
+  data = matrix(c(0,0,1,
+                  0,1,1,
+                  1,1,1,
+                  1,0,0,
+                  1,1,0,
+                  1,1,1), byrow = TRUE, ncol=3, nrow=6)
+  
+  # create random phylogeny
+  tree = ape::rphylo(6, 1, 1)
 }
 
 fit.mk = hyperinf(data, method="hypermk")
