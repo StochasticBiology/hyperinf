@@ -158,23 +158,31 @@ hyperinf <- function(data,
       fit = hypermk::mk_infer_cross_sectional(mat, reversible = reversible)
     }
   } else if(method == "hyperhmm") {
+    dots <- list(...)
+    if (!"nboot" %in% names(dots)) {
+      dots$nboot <- 0
+    }
     if(!is.null(tree)) {
       identicals = which(apply(c.tree$dests == c.tree$srcs, 1, all))
       dests = c.tree$dests[-identicals,]
       srcs = c.tree$srcs[-identicals,]
-      fit = hyperhmm::HyperHMM(dests, srcs, ...)
+      fit = do.call(hyperhmm::HyperHMM, c(list(obs = dests, initialstates = srcs), dots))
     } else {
-      fit = hyperhmm::HyperHMM(mat, ...)
+      fit = do.call(hyperhmm::HyperHMM, c(list(obs = mat), dots))
     }
   } else if(method == "hypertraps" | method == "pli") {
     pli = 0
+    dots <- list(...)
+    if (!"length" %in% names(dots)) {
+      dots$length <- 4
+    }
     if(method == "pli") {
       pli = 1
     }
     if(!is.null(tree)) {
-      fit = hypertrapsct::HyperTraPS(c.tree$dests, c.tree$srcs, pli=pli, ...)
+      fit = do.call(hypertrapsct::HyperTraPS, c(list(obs = c.tree$dests, initialstates = c.tree$srcs, pli=pli), dots))
     } else {
-      fit = hypertrapsct::HyperTraPS(mat, pli=pli, ...)
+      fit = do.call(hypertrapsct::HyperTraPS, c(list(obs = mat, pli=pli), dots))
     }
   }
   else if(method == "hyperdags") {
