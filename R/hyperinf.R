@@ -277,6 +277,7 @@ plot_hyperinf = function(fit,
       labels = as.character(1:L)
       graphD.size = igraph::neighborhood.size(graphD, L+1, mode="out")
       igraph::E(graphD)$Flux = as.numeric(graphD.size[igraph::ends(graphD, es = igraph::E(graphD), names = FALSE)[, 2]])
+      igraph::E(graphD)$Flux = igraph::E(graphD)$Flux/max(igraph::E(graphD)$Flux)
       this.ends = igraph::ends(graphD, es=igraph::E(graphD))
       srcs = strsplit(this.ends[,1], split="")
       dests = strsplit(this.ends[,2], split="")
