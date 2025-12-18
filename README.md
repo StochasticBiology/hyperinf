@@ -24,6 +24,9 @@ Wrapper function `hyperinf` produces fitted hypercubic inference models from dat
 References
 ---
 [1] Aga, O.N., Brun, M., Dauda, K.A., Diaz-Uriarte, R., Giannakis, K. and Johnston, I.G., 2024. HyperTraPS-CT: Inference and prediction for accumulation pathways with flexible data and model structures. PLOS Computational Biology, 20(9), p.e1012393.
+
 [2] Johnston, I.G. and Diaz-Uriarte, R., 2025. A hypercubic Mk model framework for capturing reversibility in disease, cancer, and evolutionary accumulation modelling. Bioinformatics, 41(1), p.btae737.
+
 [3] Moen, M.T. and Johnston, I.G., 2023. HyperHMM: efficient inference of evolutionary and progressive dynamics on hypercubic transition graphs. Bioinformatics, 39(1), p.btac803.
+
 [4] Giannakis, K., Aga, O.N., Moen, M.T., Drange, P.G. and Johnston, I.G., 2024. Identifying parsimonious pathways of accumulation and convergent evolution from binary data. bioRxiv, pp.2024-11.
