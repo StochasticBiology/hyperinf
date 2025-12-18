@@ -1,6 +1,6 @@
 Package: hyperinf
 Type: Package
-Title: An Ecosystem for Hypercubic Inference in Accumulation Modelling
+Title: An Ecosystem for Hypercubic Inference in Evolutionary Accumulation Modelling
 Version: 0.1.0
 Author: Iain Johnston
 Maintainer: Iain Johnston <aeioun@gmail.com>
