@@ -342,7 +342,7 @@ plot_hyperinf_data <- function(data,
       x = seq_len(ncol(mat)),
       y = seq_len(nrow(mat))
     )
-    df$value <- as.vector(mat)
+    df$value <- as.vector(t(mat))
 
     df$color <- ifelse(
       df$value == 1, "one",
