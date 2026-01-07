@@ -350,17 +350,21 @@ plot_hyperinf_data <- function(data,
     )
 
     out.plot = ggplot2::ggplot(df, ggplot2::aes(x, y, fill = color)) +
-      ggplot2::geom_tile() +
+      ggplot2::geom_tile(width = 0.95, height = 0.95) +
       ggplot2::scale_fill_manual(
         values = c(
-          one = "black",
+          one = "#888888",
           zero = "white",
           other = "red"
         )
       ) +
       ggplot2::coord_fixed() +
       ggplot2::scale_y_reverse() +
-      ggplot2::theme_void() + ggplot2::theme(legend.position="none")
+      ggplot2::theme_minimal() + 
+      ggplot2::theme(legend.position="none",
+                     axis.ticks.y = ggplot2::element_blank(),
+                     axis.text.y  = ggplot2::element_blank()) +
+      ggplot2::labs(x="Feature", y="Samples")
   }
 
   return(out.plot)
