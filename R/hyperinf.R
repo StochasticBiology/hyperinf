@@ -219,6 +219,8 @@ plot_hyperinf = function(fit,
     fit.type = "arborescence"
   } else if("posterior.samples" %in% names(fit)) {
     fit.type = "hypertraps"
+  } else if("Dynamics" %in% names(fit)) {
+    fit.type = "hyperlau"
   } else if("viz" %in% names(fit)) {
     fit.type = "hyperhmm"
   } else if("fitted_mk" %in% names(fit)) {
@@ -242,7 +244,7 @@ plot_hyperinf = function(fit,
                                                            no.times = TRUE, edge.label.size = 3)
     }
   } else {
-    if(fit.type %in% c("mk", "hyperhmm", "hypertraps")) {
+    if(fit.type %in% c("mk", "hyperhmm", "hyperlau", "hypertraps")) {
       # our goal is now to get a From/To/Flux dataframe and eventually a graph to plot
       if(fit.type == "mk") {
         fluxes = fit$mk_fluxes
@@ -253,6 +255,9 @@ plot_hyperinf = function(fit,
         # decimal, 0-indexed labels
       } else if(fit.type == "hyperhmm") {
         fluxes = fit$transitions[fit$transitions$Bootstrap == 0, 2:ncol(fit$transitions)]
+        # decimal, 0-indexed labels
+      } else if(fit.type == "hyperlau") {
+        fluxes = fit$Dynamics
         # decimal, 0-indexed labels
       } else if(fit.type == "hypertraps") {
         fluxes = fit$dynamics$trans
