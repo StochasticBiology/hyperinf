@@ -1,3 +1,6 @@
+#' @import ggraph
+NULL
+
 # simply returns a binary (character string) of length len from a decimal
 DecToBin <- function(x, len) {
   s = c()
