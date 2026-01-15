@@ -4,7 +4,7 @@ Title: An Ecosystem for Hypercubic Inference in Evolutionary Accumulation Modell
 Version: 0.1.0
 Author: Iain Johnston
 Maintainer: Iain Johnston <aeioun@gmail.com>
-Description: This package brings together HyperTraPS(-CT), HyperHMM, HyperDAGs and HyperMk, different algorithms for accumulation modelling. All are based around the idea of inferring hypercubic transition graphs that describe the accumulation of binary features.
+Description: This package brings together HyperTraPS(-CT), HyperHMM, HyperLAU, HyperDAGs and HyperMk, different algorithms for accumulation modelling. All are based around the idea of inferring hypercubic transition graphs that describe the accumulation of binary features.
 License: CC BY 4.0
 Encoding: UTF-8
 LazyData: true
@@ -21,5 +21,6 @@ Remotes:
     StochasticBiology/hypertrapsct,
     StochasticBiology/hyperhmm,
     StochasticBiology/hyperdags,
-    StochasticBiology/hypermk
+    StochasticBiology/hypermk,
+    StochasticBiology/hyperlau
 RoxygenNote: 7.3.2
