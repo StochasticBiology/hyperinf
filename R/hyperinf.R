@@ -421,6 +421,7 @@ plot_hyperinf = function(fit,
         ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
         ggraph::theme_graph(base_family="sans")
     } else if(uncertainty) {
+      library(ggraph)
       out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
         ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_color=FluxSD/Flux, label=label),
                                label_size = 3, label_colour="black",
