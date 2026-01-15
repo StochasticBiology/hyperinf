@@ -331,15 +331,15 @@ plot_hyperinf = function(fit,
         if(uncertainty == FALSE) {
           fluxes = fit$transitions[fit$transitions$Bootstrap == 0, 2:ncol(fit$transitions)]
         } else {
-          fluxes <- fit$transitions %>%
+          fluxes <- fit$transitions |>
             # ensure all From–To pairs exist for every Bootstrap
             tidyr::complete(
               Bootstrap,
               From,
               To,
               fill = list(Flux = 0)
-            ) %>%
-            dplyr::group_by(From, To) %>%
+            ) |>
+            dplyr::group_by(From, To) |>
             dplyr::summarise(
               mean_flux = mean(Flux),
               sd_flux = sd(Flux),
@@ -352,15 +352,15 @@ plot_hyperinf = function(fit,
         if(uncertainty == FALSE) {
           fluxes = fit$Dynamics[fit$Dynamics$Bootstrap == 0, 2:ncol(fit$Dynamics)]
         } else {
-          fluxes = fit$Dynamics %>%
+          fluxes = fit$Dynamics |>
             # ensure all From–To pairs exist for every Bootstrap
             tidyr::complete(
               Bootstrap,
               From,
               To,
               fill = list(Flux = 0)
-            ) %>%
-            dplyr::group_by(From, To) %>%
+            ) |>
+            dplyr::group_by(From, To) |>
             dplyr::summarise(
               mean_flux = mean(Flux),
               sd_flux = sd(Flux),
