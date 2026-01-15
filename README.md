@@ -14,6 +14,7 @@ This includes content from:
 * HyperMk [2] https://github.com/StochasticBiology/hypermk
 * HyperHMM [3] https://github.com/StochasticBiology/hyperhmm
 * HyperDAGs [4] https://github.com/StochasticBiology/hyperdags
+* HyperLAU [5] https://github.com/StochasticBiology/hyperlau
 
 Wrapper function `hyperinf` produces fitted hypercubic inference models from data; `plot_hyperinf` produces summary plots of the inferred transition graph.
 
@@ -30,3 +31,5 @@ References
 [3] Moen, M.T. and Johnston, I.G., 2023. HyperHMM: efficient inference of evolutionary and progressive dynamics on hypercubic transition graphs. Bioinformatics, 39(1), p.btac803.
 
 [4] Giannakis, K., Aga, O.N., Moen, M.T., Drange, P.G. and Johnston, I.G., 2024. Identifying parsimonious pathways of accumulation and convergent evolution from binary data. bioRxiv, pp.2024-11.
+
+[5] Renz, J., Brun, M. and Johnston, I.G., 2025. Flexible inference of evolutionary accumulation dynamics using uncertain observational data. arXiv preprint arXiv:2502.05872.
