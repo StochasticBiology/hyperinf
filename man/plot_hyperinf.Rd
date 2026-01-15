@@ -4,7 +4,7 @@
 \alias{plot_hyperinf}
 \title{Plot a fitted hypercubic inference model}
 \usage{
-plot_hyperinf(fit, plot.type = "", threshold = 0.05)
+plot_hyperinf(fit, plot.type = "", threshold = 0.05, uncertainty = "")
 }
 \arguments{
 \item{fit}{A fitted hypercubic inference model (output from hyperinf)}
@@ -12,6 +12,8 @@ plot_hyperinf(fit, plot.type = "", threshold = 0.05)
 \item{plot.type}{A character string, either empty (default) to allow standardised plot, or "native" to produce plots from the source algorithm}
 
 \item{threshold}{Double (default 0.05), probability flux below which edges will not be plotted}
+
+\item{uncertainty}{Boolean, whether to visualise uncertainty over bootstraps (only for HyperLAU and HyperHMM)}
 }
 \value{
 A ggplot object

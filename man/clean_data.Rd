@@ -13,7 +13,7 @@ clean_data(data)
 A matrix of observations in a standardised format
 }
 \description{
-Data can be flexibly supplied as a matrix or data frame,
+Data can be flexibly supplied as a matrix or data frame, with or without a first labelling column, and with binary observations 0, 1 (with ? or 2 for uncertainty) as individual columns or concatenated strings
 }
 \examples{
 data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
