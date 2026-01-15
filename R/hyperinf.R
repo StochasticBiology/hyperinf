@@ -239,7 +239,7 @@ hyperinf <- function(data,
     dots <- list(...)
     dots = dots[names(dots) != "independent.transitions"]
     if(!is.null(tree)) {
-      fit = do.call(hyperlau::HyperLAU, c(list(obs = c.tree$dests, Xinitialstates = c.tree$srcs), dots))
+      fit = do.call(hyperlau::HyperLAU, c(list(obs = c.tree$dests, initialstates = c.tree$srcs), dots))
     } else {
       fit = do.call(hyperlau::HyperLAU, c(list(obs = mat), dots))
     }
