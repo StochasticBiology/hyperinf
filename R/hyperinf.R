@@ -290,15 +290,17 @@ plot_hyperinf = function(fit,
     return(ggplot2::ggplot())
   }
   
-  if(fit.type == "hyperlau") {
-    if(length(unique(fit$Dynamics$Bootstrap)) > 1) {
-      uncertainty = TRUE
-    }
-  } else if(fit.type == "hyperhmm") {
-    if(length(unique(fit$transitions$Bootstrap)) > 1) {
-      uncertainty = TRUE
-    }
-  } 
+  if(uncertainty != FALSE) {
+    if(fit.type == "hyperlau") {
+      if(length(unique(fit$Dynamics$Bootstrap)) > 1) {
+        uncertainty = TRUE
+      }
+    } else if(fit.type == "hyperhmm") {
+      if(length(unique(fit$transitions$Bootstrap)) > 1) {
+        uncertainty = TRUE
+      }
+    } 
+  }
   if(uncertainty != TRUE) {
     uncertainty = FALSE
   }
