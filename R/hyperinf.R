@@ -424,12 +424,14 @@ plot_hyperinf = function(fit,
         ggraph::theme_graph(base_family="sans")
     } else if(uncertainty) {
       library(ggraph)
+      cvs = fluxes$FluxSD/fluxes$Flux
+      maxcv = max( max(cvs), 0.5 )
       out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
         ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_color=FluxSD/Flux, label=label),
                                label_size = 3, label_colour="black",
                                label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
         ggraph::scale_edge_width(limits=c(0,NA)) + 
-        ggraph::scale_edge_color_gradient(name = "CV", low = "#AAAAFF", high = "#FFAAAA", na.value = "lightgrey", limits=c(0,NA)) +
+        ggraph::scale_edge_color_gradient(name = "CV", low = "#AAAAFF", high = "#FFAAAA", na.value = "lightgrey", limits=c(0,maxcv)) +
         ggraph::theme_graph(base_family="sans")
     } else {
       out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
