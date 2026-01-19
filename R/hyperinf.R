@@ -234,7 +234,7 @@ hyperinf <- function(data,
                           do.call(hyperhmm::HyperHMM, c(list(obs = b.dests[[i]], 
                                                              initialstates = b.srcs[[i]]),
                                                         dots))
-                        }, mc.cores = detectCores())
+                        }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$transitions$p.boot = 1
         for(i in 2:length(fits)) {
@@ -262,7 +262,7 @@ hyperinf <- function(data,
                         function(i) {
                           do.call(hyperhmm::HyperHMM, c(list(obs = b.mat[[i]]), 
                                                         dots))
-                        }, mc.cores = detectCores())
+                        }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$transitions$p.boot = 1
         for(i in 2:length(fits)) {
@@ -310,7 +310,7 @@ hyperinf <- function(data,
                           do.call(hyperlau::HyperLAU, c(list(obs = b.dests[[i]], 
                                                              initialstates = b.srcs[[i]]),
                                                         dots))
-                        }, mc.cores = detectCores())
+                        }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
@@ -338,7 +338,7 @@ hyperinf <- function(data,
                         function(i) {
                           do.call(hyperlau::HyperLAU, c(list(obs = b.mat[[i]]), 
                                                         dots))
-                        }, mc.cores = detectCores())
+                        }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
