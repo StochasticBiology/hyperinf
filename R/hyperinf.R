@@ -218,6 +218,7 @@ hyperinf <- function(data,
       dests = c.tree$dests[-identicals,]
       srcs = c.tree$srcs[-identicals,]
       if(boot.parallel > 0) {
+        dots$boot.parallel <- NULL
         b.dests = b.srcs = list()
         for(i in 1:(boot.parallel+1)) {
           if(i == 1) {
@@ -247,6 +248,7 @@ hyperinf <- function(data,
       }
     } else {
       if(boot.parallel > 0) {
+        dots$boot.parallel <- NULL
         b.mat = list()
         for(i in 1:(boot.parallel+1)) {
           if(i == 1) {
@@ -292,6 +294,7 @@ hyperinf <- function(data,
     dots = dots[names(dots) != "independent.transitions"]
     if(!is.null(tree)) {
       if(boot.parallel > 0) {
+        dots$boot.parallel <- NULL
         b.dests = b.srcs = list()
         for(i in 1:(boot.parallel+1)) {
           if(i == 1) {
@@ -321,6 +324,7 @@ hyperinf <- function(data,
       }
     } else {
       if(boot.parallel > 0) {
+        dots$boot.parallel <- NULL
         b.mat = list()
         for(i in 1:(boot.parallel+1)) {
           if(i == 1) {
