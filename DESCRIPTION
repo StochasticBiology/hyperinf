@@ -20,7 +20,8 @@ Imports:
     igraph,
     stringr,
     dplyr,
-    tidyr
+    tidyr,
+    parallel
 Remotes:
     StochasticBiology/hypertrapsct,
     StochasticBiology/hyperhmm,
