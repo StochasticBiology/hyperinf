@@ -79,6 +79,7 @@ clean_data = function(data) {
 #' @param losses Boolean (default FALSE) whether to consider losses rather than gains of features
 #' @param method A character string, either empty (default) to allow automatic choice of algorithm, or one of the options in the text above
 #' @param reversible Boolean (default FALSE) whether to allow reversible transitions
+#' @param boot.parallel Integer (default 0) number of bootstrap resamples to run in parallel (only meaningful for HyperHMM and HyperLAU)
 #' @param ... other options to pass to the inference method used. For example, nboot for HyperHMM, length/kernel/walkers for HyperTraPS.
 #'
 #' @return A fitted hypercubic inference object
@@ -91,6 +92,7 @@ hyperinf <- function(data,
                      losses = FALSE,
                      method = "",
                      reversible = FALSE,
+                     boot.parallel = 0,
                      ...) {
   
   
@@ -109,8 +111,6 @@ hyperinf <- function(data,
   if(any(mat == 2) | any(mat == -1)) {
     uncertainty = TRUE
   }
-  
-  #### XXX NEEDS FIXING
   
   if(!is.null(tree)) {
     df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
@@ -217,9 +217,61 @@ hyperinf <- function(data,
       identicals = which(apply(c.tree$dests == c.tree$srcs, 1, all))
       dests = c.tree$dests[-identicals,]
       srcs = c.tree$srcs[-identicals,]
-      fit = do.call(hyperhmm::HyperHMM, c(list(obs = dests, initialstates = srcs), dots))
+      if(boot.parallel > 0) {
+        b.dests = b.srcs = list()
+        for(i in 1:(boot.parallel+1)) {
+          if(i == 1) {
+            refs = 1:nrow(dests)
+          } else {
+            refs = sample(1:nrow(dests), nrow(dests), replace=TRUE)
+          }
+          b.dests[[i]] = dests[refs,]
+          b.srcs[[i]] = srcs[refs,]
+        }
+        fits = parallel::mclapply(1:length(b.dests),
+                        function(i) {
+                          do.call(hyperhmm::HyperHMM, c(list(obs = b.dests[[i]], 
+                                                             initialstates = b.srcs[[i]]),
+                                                        dots))
+                        }, mc.cores = detectCores())
+        fit = fits[[1]]
+        fit$transitions$p.boot = 1
+        for(i in 2:length(fits)) {
+          tmp = fits[[i]]$transitions
+          tmp$p.boot = i
+          fit$transitions = rbind(fit$transitions, tmp)
+        }
+        fit$boots = fits
+      } else {
+        fit = do.call(hyperhmm::HyperHMM, c(list(obs = dests, initialstates = srcs), dots))
+      }
     } else {
-      fit = do.call(hyperhmm::HyperHMM, c(list(obs = mat), dots))
+      if(boot.parallel > 0) {
+        b.mat = list()
+        for(i in 1:(boot.parallel+1)) {
+          if(i == 1) {
+            refs = 1:nrow(mat)
+          } else {
+            refs = sample(1:nrow(mat), nrow(mat), replace=TRUE)
+          }
+          b.mat[[i]] = mat[refs,]
+        }
+        fits = parallel::mclapply(1:length(b.mat),
+                        function(i) {
+                          do.call(hyperhmm::HyperHMM, c(list(obs = b.mat[[i]]), 
+                                                        dots))
+                        }, mc.cores = detectCores())
+        fit = fits[[1]]
+        fit$transitions$p.boot = 1
+        for(i in 2:length(fits)) {
+          tmp = fits[[i]]$transitions
+          tmp$p.boot = i
+          fit$transitions = rbind(fit$transitions, tmp)
+        }
+        fit$boots = fits
+      } else {
+        fit = do.call(hyperhmm::HyperHMM, c(list(obs = mat), dots))
+      }
     }
   } else if(method == "hypertraps" | method == "pli") {
     pli = 0
@@ -239,9 +291,61 @@ hyperinf <- function(data,
     dots <- list(...)
     dots = dots[names(dots) != "independent.transitions"]
     if(!is.null(tree)) {
-      fit = do.call(hyperlau::HyperLAU, c(list(obs = c.tree$dests, initialstates = c.tree$srcs), dots))
+      if(boot.parallel > 0) {
+        b.dests = b.srcs = list()
+        for(i in 1:(boot.parallel+1)) {
+          if(i == 1) {
+            refs = 1:nrow(c.tree$dests)
+          } else {
+            refs = sample(1:nrow(c.tree$dests), nrow(c.tree$dests), replace=TRUE)
+          }
+          b.dests[[i]] = c.tree$dests[refs,]
+          b.srcs[[i]] = c.tree$srcs[refs,]
+        }
+        fits = parallel::mclapply(1:length(b.dests),
+                        function(i) {
+                          do.call(hyperlau::HyperLAU, c(list(obs = b.dests[[i]], 
+                                                             initialstates = b.srcs[[i]]),
+                                                        dots))
+                        }, mc.cores = detectCores())
+        fit = fits[[1]]
+        fit$Dynamics$p.boot = 1
+        for(i in 2:length(fits)) {
+          tmp = fits[[i]]$Dynamics
+          tmp$p.boot = i
+          fit$Dynamics = rbind(fit$Dynamics, tmp)
+        }
+        fit$boots = fits
+      } else {
+        fit = do.call(hyperlau::HyperLAU, c(list(obs = c.tree$dests, initialstates = c.tree$srcs), dots))
+      }
     } else {
-      fit = do.call(hyperlau::HyperLAU, c(list(obs = mat), dots))
+      if(boot.parallel > 0) {
+        b.mat = list()
+        for(i in 1:(boot.parallel+1)) {
+          if(i == 1) {
+            refs = 1:nrow(mat)
+          } else {
+            refs = sample(1:nrow(mat), nrow(mat), replace=TRUE)
+          }
+          b.mat[[i]] = mat[refs,]
+        }
+        fits = parallel::mclapply(1:length(b.mat),
+                        function(i) {
+                          do.call(hyperlau::HyperLAU, c(list(obs = b.mat[[i]]), 
+                                                        dots))
+                        }, mc.cores = detectCores())
+        fit = fits[[1]]
+        fit$Dynamics$p.boot = 1
+        for(i in 2:length(fits)) {
+          tmp = fits[[i]]$Dynamics
+          tmp$p.boot = i
+          fit$Dynamics = rbind(fit$Dynamics, tmp)
+        }
+        fit$boots = fits
+      } else {
+        fit = do.call(hyperlau::HyperLAU, c(list(obs = mat), dots))
+      }
     }
   }
   else if(method == "hyperdags") {
@@ -292,11 +396,13 @@ plot_hyperinf = function(fit,
   
   if(uncertainty != FALSE) {
     if(fit.type == "hyperlau") {
-      if(length(unique(fit$Dynamics$Bootstrap)) > 1) {
+      if(length(unique(fit$Dynamics$Bootstrap)) > 1 | 
+         length(unique(fit$Dynamics$p.boot)) > 1) {
         uncertainty = TRUE
       }
     } else if(fit.type == "hyperhmm") {
-      if(length(unique(fit$transitions$Bootstrap)) > 1) {
+      if(length(unique(fit$transitions$Bootstrap)) > 1 |
+         length(unique(fit$transitions$p.boot)) > 1) {
         uncertainty = TRUE
       }
     } 
