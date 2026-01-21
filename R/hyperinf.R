@@ -625,7 +625,7 @@ plot_hyperinf_data <- function(data,
   mat = clean_data(data)
   mat[mat == 2] = 0.5
   if(!is.null(tree)) {
-    df = cbind(data.frame(ID = tree$tip.label), as.data.frame(mat))
+    df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
     c.tree = hypertrapsct::curate.tree(tree, df)
     out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, ...)
   } else {
