@@ -1,6 +1,6 @@
 #' Converts a fully parameterised model to a set of parameters for L^2 HyperTraPS
 #'
-#' @param fit A fitted model from HyperHMM, HyperLAU, or (irreversible) HyperMk
+#' @param fit A fitted model with a fully parameterised hypercube
 #'
 #' @return A vector of L^2 values corresponding to the parameterisation of a HyperTraPS model
 #' @examples
@@ -19,8 +19,7 @@ full_to_squared = function(fit) {
     return(NA)
   } else if("posterior.samples" %in% names(fit)) {
     fit.type = "hypertraps"
-    message("HyperTraPS not yet supported")
-    return(NA)
+    df = fit$dynamics$trans
   } else if("Dynamics" %in% names(fit)) {
     fit.type = "hyperlau"
     df = fit$Dynamics
@@ -63,7 +62,7 @@ full_to_squared = function(fit) {
     # covariates.mat[changed feature] gets a new row containing these present features
     covariates.mat[[change]] = rbind(covariates.mat[[change]], coeffs)
     # response[change] gets the responseonse probability
-    if(fit.type %in% c("hyperlau", "hyperhmm")) {
+    if(fit.type %in% c("hyperlau", "hyperhmm", "hypertraps")) {
       response[[change]] = rbind(response[[change]], df$Probability[i])
       weights[[change]] = rbind(weights[[change]], df$Flux[i])
     } else if(fit.type == "mk") {
@@ -115,11 +114,11 @@ hypertraps_from_params = function(params,
   return(est.fit)
 }
 
-#' Estimates an L^2 HyperTraPS model from fully parameterised HyperHMM/LAU/Mk model
+#' Estimates an L^2 HyperTraPS model from fully parameterised hypercubic model
 #'
 #' Combines full_to_squared and hypertraps_from_params
 #' 
-#' @param fit  A fitted model from HyperHMM, HyperLAU, or (irreversible) HyperMk
+#' @param fit  A fitted model with a fully parameterised hypercube
 #' @param reps An integer (default 100) of times to repeat this parameterisation to build up a model structure
 #'
 #' @return A HyperTraPS model structure
