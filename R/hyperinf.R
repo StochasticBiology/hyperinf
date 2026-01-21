@@ -8,6 +8,16 @@ DecToBin <- function(x, len) {
   return(paste(s, collapse=""))
 }
 
+# simply converts a binary to a decimal
+BinToDecS <- function(state) {
+  state = as.numeric(unlist(strsplit(state, "")))
+  this.ref = 0
+  for(j in 1:length(state)) {
+    this.ref = this.ref + state[j]*(2**(length(state)-j))
+  }
+  return(this.ref)
+}
+
 #' Curate data into a systematic format for inference
 #'
 #' Data can be flexibly supplied as a matrix or data frame, with or without a first labelling column, and with binary observations 0, 1 (with ? or 2 for uncertainty) as individual columns or concatenated strings
@@ -365,6 +375,63 @@ hyperinf <- function(data,
   return(fit)
 }
 
+# pulled from HyperTraPS-CT source code
+# compute a flux dataframe given a set of transitions
+# (PosteriorAnalysis provides the latter but not the former)
+compute_hypertraps_fluxes = function(my.post,
+                                     truncate = -1,
+                                     max.samps = Inf,
+                                     use.timediffs = FALSE,
+                                     featurenames = FALSE,
+                                     no.times = TRUE) {
+  edge.from = edge.to = edge.time = edge.change = c()
+  bigL = my.post$L
+  if(truncate == -1 | truncate > bigL) { truncate = bigL }
+  nsamps = min(max.samps, nrow(my.post$routes))
+  for(i in 1:nsamps) {
+    state = paste0(rep("0", bigL), collapse = "")
+    for(j in 1:truncate) {
+      edge.from = c(edge.from, state)
+      locus = my.post$routes[i,j]+1
+      substr(state, locus, locus) <- "1"
+      edge.to = c(edge.to, state)
+      edge.change = c(edge.change, my.post$routes[i,j])
+      if(use.timediffs == TRUE) {
+        edge.time = c(edge.time, my.post$timediffs[i,j])
+      } else {
+        edge.time = c(edge.time, my.post$times[i,j])
+      }
+    }
+  }
+  
+  df = data.frame(From=sapply(edge.from, BinToDecS),
+                  To=sapply(edge.to, BinToDecS),
+                  Change=edge.change, 
+                  Time=edge.time)
+  dfu = unique(df[,1:3])
+  if(length(featurenames) > 1) {
+    dfu$Change = featurenames[dfu$Change+1]
+  }
+  dfu$Flux = dfu$MeanT = dfu$SDT = NA
+  for(i in 1:nrow(dfu)) {
+    this.set = which(df$From==dfu$From[i] & df$To==dfu$To[i])
+    dfu$Flux[i] = length(this.set)
+    dfu$MeanT[i] = mean(df$Time[this.set])
+    if(length(this.set) > 1) {
+      dfu$SDT[i] = sd(df$Time[this.set])
+    }
+    if(no.times == TRUE) {
+      dfu$label[i] = paste(c("+", dfu$Change[i]), collapse="")
+      dfu$tlabel[i] = paste(c(signif(dfu$MeanT[i], digits=2), " +- ", signif(dfu$SDT[i], digits=2)), collapse="") 
+    } else {
+      dfu$label[i] = paste(c("+", dfu$Change[i], ":\n", signif(dfu$MeanT[i], digits=2), " +- ", signif(dfu$SDT[i], digits=2)), collapse="") 
+    }
+    
+  }
+  dfu$Flux = dfu$Flux / nsamps
+  return(dfu) 
+}
+
 #' Plot a fitted hypercubic inference model
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
@@ -482,7 +549,12 @@ plot_hyperinf = function(fit,
         }
         # decimal, 0-indexed labels
       } else if(fit.type == "hypertraps") {
-        fluxes = fit$dynamics$trans
+        if("dynamics" %in% names(fit)) {
+          fluxes = fit$dynamics$trans 
+        } else {
+          message("Computing fluxes...")
+          fluxes = compute_hypertraps_fluxes(fit)
+        }
         # decimal, 0-indexed labels
       }
       
