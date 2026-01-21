@@ -1,6 +1,6 @@
-#' Converts a fully parameterised HyperHMM model to a set of parameters for L^2 HyperTraPS
+#' Converts a fully parameterised model to a set of parameters for L^2 HyperTraPS
 #'
-#' @param fitted.m A fitted HyperHMM model
+#' @param fit A fitted model from HyperHMM, HyperLAU, or (irreversible) HyperMk
 #'
 #' @return A vector of L^2 values corresponding to the parameterisation of a HyperTraPS model
 #' @examples
@@ -8,9 +8,34 @@
 #' fit = hyperinf(data)
 #' l2params = full_to_squared(fit)
 #' @export
-full_to_squared = function(fitted.m) {
-  df = fitted.m$transitions
-  L = fitted.m$L
+full_to_squared = function(fit) {
+  if("best.graph" %in% names(fit)) {
+    fit.type = "DAG"
+    message("HyperDAGs not yet supported")
+    return(NA)
+  } else if("raw.graph" %in% names(fit)) {
+    fit.type = "arborescence"
+    message("HyperDAGs not yet supported")
+    return(NA)
+  } else if("posterior.samples" %in% names(fit)) {
+    fit.type = "hypertraps"
+    message("HyperTraPS not yet supported")
+    return(NA)
+  } else if("Dynamics" %in% names(fit)) {
+    fit.type = "hyperlau"
+    df = fit$Dynamics
+  } else if("viz" %in% names(fit)) {
+    fit.type = "hyperhmm"
+    df = fit$transitions
+  } else if("fitted_mk" %in% names(fit)) {
+    fit.type = "mk"
+    df = fit$mk_fluxes
+  } else {
+    message("Didn't recognise this model")
+    return(NA)
+  }
+  
+  L = fit$L
   
   # covariates.mat stores presence of other features for each transition
   covariates.mat = replicate(
@@ -38,8 +63,14 @@ full_to_squared = function(fitted.m) {
     # covariates.mat[changed feature] gets a new row containing these present features
     covariates.mat[[change]] = rbind(covariates.mat[[change]], coeffs)
     # response[change] gets the responseonse probability
-    response[[change]] = rbind(response[[change]], df$Probability[i])
-    weights[[change]] = rbind(weights[[change]], df$Flux[i])
+    if(fit.type %in% c("hyperlau", "hyperhmm")) {
+      response[[change]] = rbind(response[[change]], df$Probability[i])
+      weights[[change]] = rbind(weights[[change]], df$Flux[i])
+    } else if(fit.type == "mk") {
+      response[[change]] = rbind(response[[change]], df$Rate[i])
+      weights[[change]] = rbind(weights[[change]], (1+df$Flux[i])/max(df$Flux))
+    }
+    
   }
   
   # l2 will store our coefficient estimates
@@ -84,11 +115,11 @@ hypertraps_from_params = function(params,
   return(est.fit)
 }
 
-#' Estimates an L^2 HyperTraPS model from fully parameterised HyperHMM model
+#' Estimates an L^2 HyperTraPS model from fully parameterised HyperHMM/LAU/Mk model
 #'
 #' Combines full_to_squared and hypertraps_from_params
 #' 
-#' @param fitted.m A fitted HyperHMM model
+#' @param fit  A fitted model from HyperHMM, HyperLAU, or (irreversible) HyperMk
 #' @param reps An integer (default 100) of times to repeat this parameterisation to build up a model structure
 #'
 #' @return A HyperTraPS model structure
@@ -97,9 +128,9 @@ hypertraps_from_params = function(params,
 #' fit = hyperinf(data)
 #' est.ht = full_to_squared_fit(fit)
 #' @export
-full_to_squared_fit = function(fitted.m,
+full_to_squared_fit = function(fit,
                                reps = 100) {
-  params = full_to_squared(fitted.m)
+  params = full_to_squared(fit)
   est.fit = hypertraps_from_params(params, reps)
   return(est.fit)
 }

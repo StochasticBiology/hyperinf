@@ -1,42 +1,3 @@
-# simply returns a binary (vector) of length len from a decimal
-DecToBin <- function(x, len) {
-  s = c()
-  for(j in (len-1):0)
-  {
-    if(x >= 2**j) { s=c(s,1); x = x-2**j } else { s=c(s,0)}
-  }
-  return(s)
-}
-
-# simply returns a binary (character string) of length len from a decimal
-DecToBinS <- function(x, len) {
-  s = c()
-  for(j in (len-1):0)
-  {
-    if(x >= 2**j) { s=c(s,1); x = x-2**j } else { s=c(s,0)}
-  }
-  return(paste(s, collapse=""))
-}
-
-# simply converts a binary to a decimal
-BinToDec <- function(state) {
-  this.ref = 0
-  for(j in 1:length(state)) {
-    this.ref = this.ref + state[j]*(2**(length(state)-j))
-  }
-  return(this.ref)
-}
-
-# simply converts a binary to a decimal
-BinToDecS <- function(state) {
-  state = as.numeric(unlist(strsplit(state, "")))
-  this.ref = 0
-  for(j in 1:length(state)) {
-    this.ref = this.ref + state[j]*(2**(length(state)-j))
-  }
-  return(this.ref)
-}
-
 #' Curate data into a systematic format for inference
 #'
 #' Data can be flexibly supplied as a matrix or data frame, with or without a first labelling column, and with binary observations 0, 1 (with ? or 2 for uncertainty) as individual columns or concatenated strings
@@ -481,6 +442,7 @@ plot_hyperinf = function(fit,
   } else if("fitted_mk" %in% names(fit)) {
     fit.type = "mk"
   } else {
+    message("Didn't recognise this model")
     return(ggplot2::ggplot())
   }
   
