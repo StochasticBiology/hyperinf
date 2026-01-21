@@ -7,7 +7,7 @@
 full_to_squared(fit)
 }
 \arguments{
-\item{fit}{A fitted model from HyperHMM, HyperLAU, or (irreversible) HyperMk}
+\item{fit}{A fitted model with a fully parameterised hypercube}
 }
 \value{
 A vector of L^2 values corresponding to the parameterisation of a HyperTraPS model

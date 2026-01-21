@@ -2,12 +2,12 @@
 % Please edit documentation in R/change-model.R
 \name{full_to_squared_fit}
 \alias{full_to_squared_fit}
-\title{Estimates an L^2 HyperTraPS model from fully parameterised HyperHMM/LAU/Mk model}
+\title{Estimates an L^2 HyperTraPS model from fully parameterised hypercubic model}
 \usage{
 full_to_squared_fit(fit, reps = 100)
 }
 \arguments{
-\item{fit}{A fitted model from HyperHMM, HyperLAU, or (irreversible) HyperMk}
+\item{fit}{A fitted model with a fully parameterised hypercube}
 
 \item{reps}{An integer (default 100) of times to repeat this parameterisation to build up a model structure}
 }
