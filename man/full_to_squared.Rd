@@ -2,18 +2,18 @@
 % Please edit documentation in R/change-model.R
 \name{full_to_squared}
 \alias{full_to_squared}
-\title{Converts a fully parameterised HyperHMM model to a set of parameters for L^2 HyperTraPS}
+\title{Converts a fully parameterised model to a set of parameters for L^2 HyperTraPS}
 \usage{
-full_to_squared(fitted.m)
+full_to_squared(fit)
 }
 \arguments{
-\item{fitted.m}{A fitted HyperHMM model}
+\item{fit}{A fitted model from HyperHMM, HyperLAU, or (irreversible) HyperMk}
 }
 \value{
 A vector of L^2 values corresponding to the parameterisation of a HyperTraPS model
 }
 \description{
-Converts a fully parameterised HyperHMM model to a set of parameters for L^2 HyperTraPS
+Converts a fully parameterised model to a set of parameters for L^2 HyperTraPS
 }
 \examples{
 data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
