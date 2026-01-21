@@ -16,7 +16,7 @@ This includes content from:
 * HyperDAGs [4] https://github.com/StochasticBiology/hyperdags
 * HyperLAU [5] https://github.com/StochasticBiology/hyperlau
 
-Wrapper function `hyperinf` produces fitted hypercubic inference models from data; `plot_hyperinf` produces summary plots of the inferred transition graph.
+Wrapper function `hyperinf` produces fitted hypercubic inference models from data; `plot_hyperinf` produces summary plots of the inferred transition graph. Arguments to `hyperinf` specify which fitting approach to use (default is to choose based on data structure). `full_to_squared_fit` converts a fully-parameterised hypercube (including those output from HyperHMM, HyperMK, HyperLAU) to a best estimate of an L<sup>2</sup>-parameterised HyperTraPS model (encoding pairwise interactions between features).
 
 <p align="center">
 <img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/828cf552-875b-4219-9e3d-494b0c56d8c7" />
