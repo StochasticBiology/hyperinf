@@ -25,6 +25,7 @@ fit.hhmm = hyperinf(data, method="hyperhmm")
 fit.dags = hyperinf(data, method="hyperdags")
 fit.hct = hyperinf(data, method="hypertraps")
 fit.pli = hyperinf(data, method="pli")
+
 ggpubr::ggarrange(plot_hyperinf(fit.mk),plot_hyperinf(fit.hhmm),
                   plot_hyperinf(fit.dags), plot_hyperinf(fit.hct),
                   plot_hyperinf(fit.mk, plot.type="native"), plot_hyperinf(fit.hhmm, plot.type="native"),
