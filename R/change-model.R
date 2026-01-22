@@ -1,6 +1,6 @@
 #' Converts a fully parameterised model to a set of parameters for L^2 HyperTraPS
 #'
-#' @param fit A fitted model with a fully parameterised hypercube
+#' @param fit A fitted model with a fully parameterised hypercube (may include bootstrap resamples)
 #'
 #' @return A vector of L^2 values corresponding to the parameterisation of a HyperTraPS model
 #' @examples
@@ -36,65 +36,87 @@ full_to_squared = function(fit) {
   
   L = fit$L
   
-  # covariates.mat stores presence of other features for each transition
-  covariates.mat = replicate(
-    L,
-    matrix(numeric(0), nrow = 0, ncol = L),
-    simplify = FALSE
-  )
-  # weights and response store those things for each transition
-  weights = response = replicate(
-    L,
-    matrix(numeric(0), nrow = 0, ncol = 1),
-    simplify = FALSE
-  )
+  l2output = matrix(ncol=L*L, nrow=0)
+  if("Bootstrap" %in% colnames(df)) {
+    if("p.boot" %in% colnames(df)) {
+      df$rep.id = paste(df$p.boot, df$Bootstrap)  
+    } else {
+      df$rep.id = df$Bootstrap
+    }
+  } else if("p.boot" %in% colnames(df)) {
+    df$rep.id = df$p.boot
+  } else {
+    df$rep.id = 1
+  }
   
-  # loop through rows in transition set
-  for(i in 1:nrow(df)) {
-    # characterise this change
-    src = DecToBin(df$From[i], L)
-    dest = DecToBin(df$To[i], L)
-    change = which(dest != src)
-    # which features are present?
-    present = which(src != 0)
-    coeffs = rep(0, L)
-    coeffs[present] = 1
-    # covariates.mat[changed feature] gets a new row containing these present features
-    covariates.mat[[change]] = rbind(covariates.mat[[change]], coeffs)
-    # response[change] gets the responseonse probability
-    if(fit.type %in% c("hyperlau", "hyperhmm", "hypertraps")) {
-      response[[change]] = rbind(response[[change]], df$Probability[i])
-      weights[[change]] = rbind(weights[[change]], df$Flux[i])
-    } else if(fit.type == "mk") {
-      response[[change]] = rbind(response[[change]], df$Rate[i])
-      weights[[change]] = rbind(weights[[change]], (1+df$Flux[i])/max(df$Flux))
+  l2output = matrix(ncol=L*L, nrow=0)
+  
+  for(this.rep in unique(df$rep.id)) {
+    this.df = df[df$rep.id == this.rep,]
+    
+    # covariates.mat stores presence of other features for each transition
+    covariates.mat = replicate(
+      L,
+      matrix(numeric(0), nrow = 0, ncol = L),
+      simplify = FALSE
+    )
+    # weights and response store those things for each transition
+    weights = response = replicate(
+      L,
+      matrix(numeric(0), nrow = 0, ncol = 1),
+      simplify = FALSE
+    )
+    
+    # loop through rows in transition set
+    for(i in 1:nrow(this.df)) {
+      # characterise this change
+      src = DecToBin(this.df$From[i], L)
+      dest = DecToBin(this.df$To[i], L)
+      change = which(dest != src)
+      # which features are present?
+      present = which(src != 0)
+      coeffs = rep(0, L)
+      coeffs[present] = 1
+      # covariates.mat[changed feature] gets a new row containing these present features
+      covariates.mat[[change]] = rbind(covariates.mat[[change]], coeffs)
+      # response[change] gets the responseonse probability
+      if(fit.type %in% c("hyperlau", "hyperhmm", "hypertraps")) {
+        response[[change]] = rbind(response[[change]], this.df$Probability[i])
+        weights[[change]] = rbind(weights[[change]], this.df$Flux[i])
+      } else if(fit.type == "mk") {
+        response[[change]] = rbind(response[[change]], this.df$Rate[i])
+        weights[[change]] = rbind(weights[[change]], (1+this.df$Flux[i])/max(this.df$Flux))
+      }
+      
     }
     
+    # l2 will store our coefficient estimates
+    l2 = matrix(0, nrow=L, ncol=L)
+    # for each feature
+    for(i in 1:L) {
+      # remove the feature itself from the covariate set
+      this.covariates.mat = covariates.mat[[i]][,-i]
+      # attempt to weighted-fit exp( beta_0 + sum beta_i covariate_i ) = response
+      this.lm = lm(log(response[[i]]) ~ this.covariates.mat, weights=weights[[i]])
+      # store modifiers and base rate
+      l2[i,-i] = this.lm$coefficients[2:L]
+      l2[i,i] = this.lm$coefficients[1]
+    }
+    # remove NAs and cast in form for HyperTraPS analysis
+    l2[is.na(l2)] = 0
+    l2v = as.vector(l2)
+    l2tmp = t(as.matrix(l2v))
+    
+    l2output = rbind(l2output, l2tmp)
   }
   
-  # l2 will store our coefficient estimates
-  l2 = matrix(0, nrow=L, ncol=L)
-  # for each feature
-  for(i in 1:L) {
-    # remove the feature itself from the covariate set
-    this.covariates.mat = covariates.mat[[i]][,-i]
-    # attempt to weighted-fit exp( beta_0 + sum beta_i covariate_i ) = response
-    this.lm = lm(log(response[[i]]) ~ this.covariates.mat, weights=weights[[i]])
-    # store modifiers and base rate
-    l2[i,-i] = this.lm$coefficients[2:L]
-    l2[i,i] = this.lm$coefficients[1]
-  }
-  # remove NAs and cast in form for HyperTraPS analysis
-  l2[is.na(l2)] = 0
-  l2v = as.vector(l2)
-  l2tmp = as.matrix(l2v)
-  return(l2tmp)
+  return(l2output)
 }
 
-#' Produces a fitted HyperTraPS model from a parameterisation
+#' Produces a fitted HyperTraPS model from a matrix of parameterisation
 #'
-#' @param params A vector of L^2 values corresponding to a HyperTraPS parameterisation
-#' @param reps An integer (default 100) of times to repeat this parameterisation to build up a model structure
+#' @param params A matrix where each row contains L^2 values corresponding to a HyperTraPS parameterisation
+#' @param reps An integer (default 100) of times to repeat these parameterisations to build up a model structure
 #'
 #' @return A HyperTraPS model structure
 #' @examples
@@ -105,8 +127,8 @@ full_to_squared = function(fit) {
 #' @export
 hypertraps_from_params = function(params,
                                   reps = 100) {
-  L = sqrt(length(params))
-  l2m <- t(cbind(params, params[, 1, drop = FALSE][, rep(1, reps)]))
+  L = sqrt(ncol(params))
+  l2m <- params[rep(seq_len(nrow(params)), times = reps), ]
   est = list(posterior.samples=l2m,
              model=2,
              L=L)
@@ -118,7 +140,7 @@ hypertraps_from_params = function(params,
 #'
 #' Combines full_to_squared and hypertraps_from_params
 #' 
-#' @param fit  A fitted model with a fully parameterised hypercube
+#' @param fit  A fitted model with a fully parameterised hypercube (can include bootstrap resamples)
 #' @param reps An integer (default 100) of times to repeat this parameterisation to build up a model structure
 #'
 #' @return A HyperTraPS model structure

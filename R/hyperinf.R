@@ -661,3 +661,48 @@ plot_hyperinf_data <- function(data,
   return(out.plot)
 }
 
+#' Plot interactions from a fitted hypercubic inference model
+#'
+#' @param fit A fitted hypercubic inference model (output from hyperinf)
+#' @param threshold Double (default 0.05), interaction strength below which edges will not be plotted
+#' @param cv.threshold Double (default 1), coefficient of variation for interaction strength above which edges will not be plotted
+#'
+#' @return A ggplot object
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' fit = hyperinf(data)
+#' plot_hyperinf_interactions(fit)
+#' @export
+plot_hyperinf_interactions = function(fit,
+                         threshold = 0.1,
+                         cv.threshold = 0.5) {
+  if("best.graph" %in% names(fit)) {
+    fit.type = "DAG"
+    message("HyperDAGs not supported yet")
+    return(ggplot2::ggplot())
+  } else if("raw.graph" %in% names(fit)) {
+    fit.type = "arborescence"
+    message("HyperDAGs not supported yet")
+    return(ggplot2::ggplot())
+  } else if("posterior.samples" %in% names(fit)) {
+    fit.type = "hypertraps"
+    working.fit = fit
+  } else if("Dynamics" %in% names(fit)) {
+    fit.type = "hyperlau"
+    working.fit = full_to_squared_fit(fit)
+  } else if("viz" %in% names(fit)) {
+    fit.type = "hyperhmm"
+    working.fit = full_to_squared_fit(fit)
+  } else if("fitted_mk" %in% names(fit)) {
+    fit.type = "mk"
+    working.fit = full_to_squared_fit(fit)
+  } else {
+    message("Didn't recognise this model")
+    return(ggplot2::ggplot())
+  }
+  
+  hypertrapsct::plotHypercube.influencegraph(working.fit,
+                                             thresh = threshold,
+                                             cv.thresh = cv.threshold)
+}
+
