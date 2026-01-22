@@ -7,7 +7,7 @@
 full_to_squared_fit(fit, reps = 100)
 }
 \arguments{
-\item{fit}{A fitted model with a fully parameterised hypercube}
+\item{fit}{A fitted model with a fully parameterised hypercube (can include bootstrap resamples)}
 
 \item{reps}{An integer (default 100) of times to repeat this parameterisation to build up a model structure}
 }

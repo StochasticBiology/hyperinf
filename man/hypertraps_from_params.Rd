@@ -2,20 +2,20 @@
 % Please edit documentation in R/change-model.R
 \name{hypertraps_from_params}
 \alias{hypertraps_from_params}
-\title{Produces a fitted HyperTraPS model from a parameterisation}
+\title{Produces a fitted HyperTraPS model from a matrix of parameterisation}
 \usage{
 hypertraps_from_params(params, reps = 100)
 }
 \arguments{
-\item{params}{A vector of L^2 values corresponding to a HyperTraPS parameterisation}
+\item{params}{A matrix where each row contains L^2 values corresponding to a HyperTraPS parameterisation}
 
-\item{reps}{An integer (default 100) of times to repeat this parameterisation to build up a model structure}
+\item{reps}{An integer (default 100) of times to repeat these parameterisations to build up a model structure}
 }
 \value{
 A HyperTraPS model structure
 }
 \description{
-Produces a fitted HyperTraPS model from a parameterisation
+Produces a fitted HyperTraPS model from a matrix of parameterisation
 }
 \examples{
 data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)

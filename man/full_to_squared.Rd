@@ -7,7 +7,7 @@
 full_to_squared(fit)
 }
 \arguments{
-\item{fit}{A fitted model with a fully parameterised hypercube}
+\item{fit}{A fitted model with a fully parameterised hypercube (may include bootstrap resamples)}
 }
 \value{
 A vector of L^2 values corresponding to the parameterisation of a HyperTraPS model
