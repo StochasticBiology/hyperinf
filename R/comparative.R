@@ -1,5 +1,3 @@
-library(ggraph)
-
 #' Produce dataframe of ordering probabilities
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
@@ -28,9 +26,32 @@ hyperinf_bubbles = function(fit) {
     message("Didn't recognise this model")
     return(ggplot2::ggplot())
   }
-  if(!(fit.type %in% c("hyperhmm", "hypertraps"))) {
+  if(!(fit.type %in% c("hyperhmm", "hypertraps", "mk", "hyperlau"))) {
     message("This fit type not yet supported!")
     stop()
+  }
+  if(fit.type == "mk") {
+    c.df = old.df = this.fit$mk_fluxes
+    c.df = c.df[c.df$To > c.df$From,]
+    c.df$change = this.fit$L-log(c.df$To-c.df$From, base=2)
+    bins = sapply(c.df$From, DecToBin, len=this.fit$L)
+    c.df$level = colSums(bins)
+    for(l in unique(c.df$level)) {
+      l.sum = sum(c.df$Flux[c.df$level == l])
+      c.df$Flux[c.df$level == l] = c.df$Flux[c.df$level == l]/l.sum
+    } 
+    bp = data.frame(feature=c.df$change,
+                    order=c.df$level+1,
+                    prob=c.df$Flux)
+  }
+  if(fit.type == "hyperlau") {
+    c.df = this.fit$Dynamics
+    c.df$change = this.fit$L-log(c.df$To-c.df$From, base=2)
+    bins = sapply(c.df$From, DecToBin, len=this.fit$L)
+    c.df$level = colSums(bins)
+    bp = data.frame(feature=c.df$change,
+                    order=c.df$level+1,
+                    prob=c.df$Flux)
   }
   if(fit.type == "hyperhmm") {
     bp = this.fit$stats
@@ -151,6 +172,9 @@ plot_hyperinf_bubbles = function(fits,
 #' @param threshold Double (default 0.05), probability flux below which edges will not be plotted
 #' @param expt.names Optional vector of labels for each element of the fit list
 #' @param feature.names Optional vector of labels for the L features in each fit
+#' @param style Character (default "limited") giving plot style. "limited" condenses bootstrap resamples into single edges; others plot each as a different arc.
+#' @param bend Numeric (default 0.5) the strength of the bend separating edges between the same pair of nodes
+#' @param label_size Numeric (default 2) the size of edge labels
 #'
 #' @return A ggplot object
 #' @examples
@@ -161,7 +185,11 @@ plot_hyperinf_bubbles = function(fits,
 #' @export
 plot_hyperinf_comparative = function(fits, threshold=0.05,
                                      expt.names=NULL,
-                                     feature.names=NULL) {
+                                     feature.names=NULL,
+                                     style="limited",
+                                     bend = 0.5,
+                                     label_size = 2) {
+  library(ggraph)
   plot.graphs = layers = es = list()
   i = 1
   for(this.fit in fits) {
@@ -193,30 +221,68 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   }
   edges = dplyr::bind_rows(es)
   edges = edges[edges$Flux > threshold,]
-  
   if(length(feature.names) > 0) {
     edges$label = paste("+", feature.names[edges$Change], sep="")
   }
+  
+  if(style == "limited") {
+  uniques = which(!duplicated(edges[,c("from", "to", "src")]))
+  new.edges = data.frame()
+  for(u in uniques) {
+    tmp = edges[u,]
+    tmp.set = which(edges$from==tmp$from &
+                      edges$to==tmp$to &
+                      edges$src==tmp$src)
+    new.edges = rbind(new.edges, data.frame(from=tmp$from,
+                                            to=tmp$to,
+                                            src=tmp$src,
+                                            label=tmp$label,
+                                            nboot=length(tmp.set),
+                                            mean=mean(edges$Flux[tmp.set])))
+  }
+  new.edges$label[new.edges$nboot < 2] = ""
+  }
+  
   u.layers = which(!duplicated(names(unlist(layers))))
   use.layers = unlist(layers)[u.layers]
   use.layers = use.layers[which(names(use.layers) %in% igraph::union(edges$from, edges$to))]
-  g_combined <- igraph::graph_from_data_frame(edges, directed = TRUE, vertices = NULL)
+  if(style != "limited") {
+    g_combined <- igraph::graph_from_data_frame(edges, directed = TRUE, vertices = NULL)
+  } else {
+    g_combined <- igraph::graph_from_data_frame(new.edges, directed = TRUE, vertices = NULL)
+  }  
   
   # Ensure src is a factor
   igraph::E(g_combined)$Experiment <- factor(igraph::E(g_combined)$src)
   
-  ggraph::ggraph(g_combined, layout = "sugiyama") +
+  if(style == "limited") {
+  g.plot = ggraph::ggraph(g_combined, layout = "sugiyama") +
     ggraph::geom_edge_fan(ggplot2::aes(
-      edge_width = Flux,
-      edge_alpha = Flux,
+      edge_width = mean,
+      edge_alpha = nboot,
       color = Experiment,
       label=label,
     ),
-    strength = 0.5, check_overlap=TRUE
+    strength = bend, check_overlap=TRUE, label_size=label_size
     ) +
-    ggraph::scale_edge_width(range = c(0.5, 2)) +
-    ggraph::scale_edge_alpha(range = c(0.3, 1)) +
+    ggraph::scale_edge_width(range = c(0.1, 4)) +
+    ggraph::scale_edge_alpha(range = c(0, 0.4)) +
     ggraph::theme_graph(base_family = "sans") 
+  } else {
+    g.plot = ggraph::ggraph(g_combined, layout = "sugiyama") +
+      ggraph::geom_edge_fan(ggplot2::aes(
+        edge_width = Flux,
+        edge_alpha = Flux,
+        color = Experiment,
+        label=label,
+      ),
+      strength = bend, check_overlap=TRUE, label_size=label_size
+      ) +
+      ggraph::scale_edge_width(range = c(0.5, 2)) +
+      ggraph::scale_edge_alpha(range = c(0.3, 1)) +
+      ggraph::theme_graph(base_family = "sans") 
+  }
+  return(g.plot)
 }
 
 
