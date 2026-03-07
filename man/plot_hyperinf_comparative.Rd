@@ -8,7 +8,10 @@ plot_hyperinf_comparative(
   fits,
   threshold = 0.05,
   expt.names = NULL,
-  feature.names = NULL
+  feature.names = NULL,
+  style = "limited",
+  bend = 0.5,
+  label_size = 2
 )
 }
 \arguments{
@@ -19,6 +22,12 @@ plot_hyperinf_comparative(
 \item{expt.names}{Optional vector of labels for each element of the fit list}
 
 \item{feature.names}{Optional vector of labels for the L features in each fit}
+
+\item{style}{Character (default "limited") giving plot style. "limited" condenses bootstrap resamples into single edges; others plot each as a different arc.}
+
+\item{bend}{Numeric (default 0.5) the strength of the bend separating edges between the same pair of nodes}
+
+\item{label_size}{Numeric (default 2) the size of edge labels}
 }
 \value{
 A ggplot object
