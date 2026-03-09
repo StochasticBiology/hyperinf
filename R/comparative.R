@@ -285,4 +285,50 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   return(g.plot)
 }
 
+#' Comparative bubble plot for bootstrapped fitted models
+#'
+#' @param fit.1 A fitted hypercubic inference models with bootstrap info (output from hyperinf)
+#' @param fit.2 A fitted hypercubic inference models with bootstrap info (output from hyperinf)
+#'
+#' @return A ggplot object
+#' @export
+plot_hyperinf_bootstrap = function(fit.1, fit.2) {
+  if(!("boots" %in% names(fit.1) & "boots" %in% names(fit.2) )) {
+    message("This doesn't look like a comparable pair of model fits")
+    return(ggplot2::ggplot())
+  }
+
+  boots = list()
+  boots = c(boots, fit.1$boots)
+  boots = c(boots, fit.2$boots)
+
+  bub.set = lapply(boots, hyperinf_bubbles)
+  groups = c(rep(1, length(fit.1$boots)), rep(2, length(fit.2$boots)))
+  sum.set = list()
+  sum.df = data.frame()
+  for(g in unique(groups)) {
+    g.set = bub.set[which(groups == g)]
+    result <- cbind(
+      g.set[[1]][1:2],
+      do.call(cbind, lapply(g.set, `[`, 3))
+    )
+    result$mean = apply(result[,3:ncol(result)], 1, mean)
+    result$min = apply(result[,3:ncol(result)], 1, min)
+    result$max = apply(result[,3:ncol(result)], 1, max)
+    result$g = g
+    sum.set[[g]] = result[,c("feature", "order", "mean", "min", "max")]
+    sum.df = rbind(sum.df, result[,c("g", "feature", "order", "mean", "min", "max")])
+  }
+  m = unique(sum.df[,c("feature", "order")])
+  m$sig = 0
+  for(i in 1:nrow(m)) {
+    g1 = sum.df[sum.df$g==1 & sum.df$feature==m$feature[i] & sum.df$order==m$order[i],]
+    g2 = sum.df[sum.df$g==2 & sum.df$feature==m$feature[i] & sum.df$order==m$order[i],]
+    if(g1$min > g2$max | g1$max < g2$min) { m$sig[i] = 1 }
+  }
+
+  plot_hyperinf_bubbles(boots, p.scale = 0.1) + 
+    ggplot2::geom_point(data=m[m$sig==1,], ggplot2::aes(x=order, y=feature+0.15, group=1, fill="*"), shape="*", size=12) +
+    ggplot2::theme(legend.position="none")
+}
 
