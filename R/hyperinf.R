@@ -53,6 +53,8 @@ clean_data = function(data) {
   mat[mat == "?"] <- 2
   mat <- apply(mat, c(1,2), function(x) as.numeric(x))
   
+  rownames(mat) = colnames(mat) = NULL
+  
   return(mat)
 }
 
@@ -86,12 +88,19 @@ hyperinf <- function(data,
                      ...) {
   
   
-  # TO DO -- MAKE SURE DATA ALIGNS WITH TIPS
+  # TO DO 
   #       -- TIMINGS
   #       -- NOT SURE UNCERTAINTY'S HANDLED RIGHT
   
   mat = clean_data(data)
   
+  if(is.matrix(data) & !is.null(tree)) {
+    if(is.null(rownames(data))) {
+      message("You've given me a matrix without rownames and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
+      tree = NULL
+      Sys.sleep(3)
+    }
+  }
   if(losses == TRUE) {
     mat = 1-mat
   }
@@ -103,7 +112,15 @@ hyperinf <- function(data,
   }
   
   if(!is.null(tree)) {
-    df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    if(is.matrix(data)) {
+      df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
+    } else {
+      df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    }
+    if(!setequal(df$ID, tree$tip.label)) {
+      message("Warning: data IDs don't match tree tip labels. This won't work!")
+      return("Error")
+    }
     if(any(mat == 2) | any(mat == -1)) {
       it = TRUE
       dots <- list(...)
@@ -148,7 +165,7 @@ hyperinf <- function(data,
       message("Selecting HyperDAGs...")
     }
   } else {
-    if(method == "hypermk" & L > 7) {
+    if(method == "hypermk" & L > 6) {
       message("L > 6 will be hard and unstable for HyperMk! Pausing in case you want to break...")
       Sys.sleep(3)
     }
@@ -220,11 +237,11 @@ hyperinf <- function(data,
           b.srcs[[i]] = srcs[refs,]
         }
         fits = parallel::mclapply(1:length(b.dests),
-                        function(i) {
-                          do.call(hyperhmm::HyperHMM, c(list(obs = b.dests[[i]], 
-                                                             initialstates = b.srcs[[i]]),
-                                                        dots))
-                        }, mc.cores = parallel::detectCores())
+                                  function(i) {
+                                    do.call(hyperhmm::HyperHMM, c(list(obs = b.dests[[i]], 
+                                                                       initialstates = b.srcs[[i]]),
+                                                                  dots))
+                                  }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$transitions$p.boot = 1
         for(i in 2:length(fits)) {
@@ -249,10 +266,10 @@ hyperinf <- function(data,
           b.mat[[i]] = mat[refs,]
         }
         fits = parallel::mclapply(1:length(b.mat),
-                        function(i) {
-                          do.call(hyperhmm::HyperHMM, c(list(obs = b.mat[[i]]), 
-                                                        dots))
-                        }, mc.cores = parallel::detectCores())
+                                  function(i) {
+                                    do.call(hyperhmm::HyperHMM, c(list(obs = b.mat[[i]]), 
+                                                                  dots))
+                                  }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$transitions$p.boot = 1
         for(i in 2:length(fits)) {
@@ -296,11 +313,11 @@ hyperinf <- function(data,
           b.srcs[[i]] = c.tree$srcs[refs,]
         }
         fits = parallel::mclapply(1:length(b.dests),
-                        function(i) {
-                          do.call(hyperlau::HyperLAU, c(list(obs = b.dests[[i]], 
-                                                             initialstates = b.srcs[[i]]),
-                                                        dots))
-                        }, mc.cores = parallel::detectCores())
+                                  function(i) {
+                                    do.call(hyperlau::HyperLAU, c(list(obs = b.dests[[i]], 
+                                                                       initialstates = b.srcs[[i]]),
+                                                                  dots))
+                                  }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
@@ -325,10 +342,10 @@ hyperinf <- function(data,
           b.mat[[i]] = mat[refs,]
         }
         fits = parallel::mclapply(1:length(b.mat),
-                        function(i) {
-                          do.call(hyperlau::HyperLAU, c(list(obs = b.mat[[i]]), 
-                                                        dots))
-                        }, mc.cores = parallel::detectCores())
+                                  function(i) {
+                                    do.call(hyperlau::HyperLAU, c(list(obs = b.mat[[i]]), 
+                                                                  dots))
+                                  }, mc.cores = parallel::detectCores())
         fit = fits[[1]]
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
@@ -478,132 +495,38 @@ plot_hyperinf = function(fit,
                                                            no.times = TRUE, edge.label.size = 3)
     }
   } else {
-    if(fit.type %in% c("mk", "hyperhmm", "hyperlau", "hypertraps")) {
-      # our goal is now to get a From/To/Flux dataframe and eventually a graph to plot
-      if(fit.type == "mk") {
-        fluxes = fit$mk_fluxes
-        fluxes$Flux = fluxes$Flux/sum(fluxes$Flux[fluxes$From == 0])
-        if(any(fluxes$From > fluxes$To)) {
-          reversible = TRUE
-        }
-        # decimal, 0-indexed labels
-      } else if(fit.type == "hyperhmm") {
-        if(uncertainty == FALSE) {
-          fluxes = fit$transitions[fit$transitions$Bootstrap == 0, 2:ncol(fit$transitions)]
-        } else {
-          fluxes <- fit$transitions |>
-            # ensure all From–To pairs exist for every Bootstrap
-            tidyr::complete(
-              Bootstrap,
-              From,
-              To,
-              fill = list(Flux = 0)
-            ) |>
-            dplyr::group_by(From, To) |>
-            dplyr::summarise(
-              mean_flux = mean(Flux),
-              sd_flux = sd(Flux),
-              .groups = "drop"
-            )
-          colnames(fluxes) = c("From", "To", "Flux", "FluxSD")
-        }
-        # decimal, 0-indexed labels
-      } else if(fit.type == "hyperlau") {
-        if(uncertainty == FALSE) {
-          fluxes = fit$Dynamics[fit$Dynamics$Bootstrap == 0, 2:ncol(fit$Dynamics)]
-        } else {
-          fluxes = fit$Dynamics |>
-            # ensure all From–To pairs exist for every Bootstrap
-            tidyr::complete(
-              Bootstrap,
-              From,
-              To,
-              fill = list(Flux = 0)
-            ) |>
-            dplyr::group_by(From, To) |>
-            dplyr::summarise(
-              mean_flux = mean(Flux),
-              sd_flux = sd(Flux),
-              .groups = "drop"
-            )
-          colnames(fluxes) = c("From", "To", "Flux", "FluxSD")
-        }
-        # decimal, 0-indexed labels
-      } else if(fit.type == "hypertraps") {
-        if("dynamics" %in% names(fit)) {
-          fluxes = fit$dynamics$trans 
-        } else {
-          message("Computing fluxes...")
-          fluxes = compute_hypertraps_fluxes(fit)
-        }
-        # decimal, 0-indexed labels
-      }
-      
-      L = fit$L
-      fluxes$From.b = sapply(fluxes$From, DecToBinS, len=L)
-      fluxes$To.b = sapply(fluxes$To, DecToBinS, len=L)
-      fluxes$Change = L-log(abs(fluxes$From-fluxes$To), base=2)
-      fluxes$label = paste0("+", fluxes$Change)
-      if(reversible == TRUE) {
-        fluxes$label[which(fluxes$From > fluxes$To)] = paste0("-", fluxes$Change[which(fluxes$From > fluxes$To)])
-      }
-      fluxes = fluxes[fluxes$Flux > threshold,]
-      states = unique(c(fluxes$From, fluxes$To))
-      states.b = unique(c(fluxes$From.b, fluxes$To.b))
-      layers = sapply(states.b, stringr::str_count, pattern="1")
-      names(layers) = states
-      plot.graph = igraph::graph_from_data_frame(fluxes)
-      
-    } else if(fit.type == "DAG" | fit.type == "arborescence") {
-      if(fit.type == "arborescence") {
-        graphD = fit$rewired.graph
-      } else {
-        graphD = fit$best.graph
-      }
-      graphD.layers = sapply(igraph::V(graphD)$name, stringr::str_count, "1")
-      L = stringr::str_length(igraph::V(graphD)$name[1])
-      labels = as.character(1:L)
-      graphD.size = igraph::neighborhood.size(graphD, L+1, mode="out")
-      igraph::E(graphD)$Flux = as.numeric(graphD.size[igraph::ends(graphD, es = igraph::E(graphD), names = FALSE)[, 2]])
-      igraph::E(graphD)$Flux = igraph::E(graphD)$Flux/max(igraph::E(graphD)$Flux)
-      this.ends = igraph::ends(graphD, es=igraph::E(graphD))
-      srcs = strsplit(this.ends[,1], split="")
-      dests = strsplit(this.ends[,2], split="")
-      for(i in 1:nrow(this.ends)) {
-        igraph::E(graphD)$label[i] = paste0("+", paste0(labels[which(srcs[[i]]!=dests[[i]])], collapse="\n"), collapse="")
-      }
-      
-      plot.graph = graphD
-      layers = graphD.layers
-    }
-    
-    if(reversible) {
-      out.plot=  ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
-        ggraph::geom_edge_arc(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label, circular = FALSE),
-                              strength = 0.05,
-                              label_size = 3, label_colour="black", color="#AAAAFF",
-                              label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
-        ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
-        ggraph::theme_graph(base_family="sans")
-    } else if(uncertainty) {
-      library(ggraph)
-      cvs = fluxes$FluxSD/fluxes$Flux
-      maxcv = max( max(cvs), 0.5 )
-      out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
-        ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_color=FluxSD/Flux, label=label),
-                               label_size = 3, label_colour="black",
-                               label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
-        ggraph::scale_edge_width(limits=c(0,NA)) + 
-        ggraph::scale_edge_color_gradient(name = "CV", low = "#AAAAFF", high = "#FFAAAA", na.value = "lightgrey", limits=c(0,maxcv)) +
-        ggraph::theme_graph(base_family="sans")
-    } else {
-      out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
-        ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label),
-                               label_size = 3, label_colour="black", color="#AAAAFF",
-                               label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
-        ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
-        ggraph::theme_graph(base_family="sans")
-    }
+    tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold)
+    plot.graph = tmp1[["plot.graph"]]
+    layers = tmp1[["layers"]]
+    fluxes = tmp1[["fluxes"]]
+  }
+  
+  if(reversible) {
+    out.plot=  ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+      ggraph::geom_edge_arc(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label, circular = FALSE),
+                            strength = 0.05,
+                            label_size = 3, label_colour="black", color="#AAAAFF",
+                            label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
+      ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
+      ggraph::theme_graph(base_family="sans")
+  } else if(uncertainty) {
+    library(ggraph)
+    cvs = fluxes$FluxSD/fluxes$Flux
+    maxcv = max( max(cvs), 0.5 )
+    out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+      ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_color=FluxSD/Flux, label=label),
+                             label_size = 3, label_colour="black",
+                             label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
+      ggraph::scale_edge_width(limits=c(0,NA)) + 
+      ggraph::scale_edge_color_gradient(name = "CV", low = "#AAAAFF", high = "#FFAAAA", na.value = "lightgrey", limits=c(0,maxcv)) +
+      ggraph::theme_graph(base_family="sans")
+  } else {
+    out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+      ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label),
+                             label_size = 3, label_colour="black", color="#AAAAFF",
+                             label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
+      ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
+      ggraph::theme_graph(base_family="sans")
   }
   return(out.plot)
 }
@@ -624,8 +547,21 @@ plot_hyperinf_data <- function(data,
                                ...) {
   mat = clean_data(data)
   mat[mat == 2] = 0.5
+  if(is.matrix(data) & !is.null(tree)) {
+    if(is.null(rownames(data))) {
+      message("You've given me a matrix without rownames and a tree, but to plot tree-linked data I need a dataframe with IDs in the first column!")
+      tree = NULL
+    }
+  }
   if(!is.null(tree)) {
-    df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    if(is.matrix(data)) {
+      df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
+    } else {
+      df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    }
+    if(!setequal(df$ID, tree$tip.label)) {
+      message("Warning: data IDs don't match tree tip labels. Unexpected behaviour will result.")
+    }
     c.tree = hypertrapsct::curate.tree(tree, df)
     out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, ...)
   } else {
@@ -674,8 +610,8 @@ plot_hyperinf_data <- function(data,
 #' plot_hyperinf_interactions(fit)
 #' @export
 plot_hyperinf_interactions = function(fit,
-                         threshold = 0.1,
-                         cv.threshold = 0.5) {
+                                      threshold = 0.1,
+                                      cv.threshold = 0.5) {
   if("best.graph" %in% names(fit)) {
     fit.type = "DAG"
     message("HyperDAGs not supported yet")

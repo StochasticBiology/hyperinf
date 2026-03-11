@@ -36,3 +36,4 @@ BinToDecS <- function(state) {
   }
   return(this.ref)
 }
+
