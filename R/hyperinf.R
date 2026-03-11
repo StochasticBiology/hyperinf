@@ -53,6 +53,8 @@ clean_data = function(data) {
   mat[mat == "?"] <- 2
   mat <- apply(mat, c(1,2), function(x) as.numeric(x))
   
+  rownames(mat) = colnames(mat) = NULL
+  
   return(mat)
 }
 
@@ -86,16 +88,18 @@ hyperinf <- function(data,
                      ...) {
   
   
-  # TO DO -- MAKE SURE DATA ALIGNS WITH TIPS
+  # TO DO 
   #       -- TIMINGS
   #       -- NOT SURE UNCERTAINTY'S HANDLED RIGHT
   
   mat = clean_data(data)
   
   if(is.matrix(data) & !is.null(tree)) {
-    message("You've given me a matrix and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
-    tree = NULL
-    Sys.sleep(3)
+    if(is.null(rownames(data))) {
+      message("You've given me a matrix without rownames and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
+      tree = NULL
+      Sys.sleep(3)
+    }
   }
   if(losses == TRUE) {
     mat = 1-mat
@@ -108,7 +112,11 @@ hyperinf <- function(data,
   }
   
   if(!is.null(tree)) {
-    df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    if(is.matrix(data)) {
+      df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
+    } else {
+      df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    }
     if(!setequal(df$ID, tree$tip.label)) {
       message("Warning: data IDs don't match tree tip labels. This won't work!")
       return("Error")
@@ -540,11 +548,17 @@ plot_hyperinf_data <- function(data,
   mat = clean_data(data)
   mat[mat == 2] = 0.5
   if(is.matrix(data) & !is.null(tree)) {
-    message("You've given me a matrix and a tree, but to plot tree-linked data I need a dataframe with IDs in the first column!")
-    tree = NULL
+    if(is.null(rownames(data))) {
+      message("You've given me a matrix without rownames and a tree, but to plot tree-linked data I need a dataframe with IDs in the first column!")
+      tree = NULL
+    }
   }
   if(!is.null(tree)) {
-    df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    if(is.matrix(data)) {
+      df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
+    } else {
+      df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    }
     if(!setequal(df$ID, tree$tip.label)) {
       message("Warning: data IDs don't match tree tip labels. Unexpected behaviour will result.")
     }
