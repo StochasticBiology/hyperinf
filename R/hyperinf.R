@@ -92,6 +92,11 @@ hyperinf <- function(data,
   
   mat = clean_data(data)
   
+  if(is.matrix(data) & !is.null(tree)) {
+    message("You've given me a matrix and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
+    tree = NULL
+    Sys.sleep(3)
+  }
   if(losses == TRUE) {
     mat = 1-mat
   }
@@ -104,6 +109,10 @@ hyperinf <- function(data,
   
   if(!is.null(tree)) {
     df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    if(!setequal(df$ID, tree$tip.label)) {
+      message("Warning: data IDs don't match tree tip labels. This won't work!")
+      return("Error")
+    }
     if(any(mat == 2) | any(mat == -1)) {
       it = TRUE
       dots <- list(...)
@@ -148,7 +157,7 @@ hyperinf <- function(data,
       message("Selecting HyperDAGs...")
     }
   } else {
-    if(method == "hypermk" & L > 7) {
+    if(method == "hypermk" & L > 6) {
       message("L > 6 will be hard and unstable for HyperMk! Pausing in case you want to break...")
       Sys.sleep(3)
     }
@@ -530,8 +539,15 @@ plot_hyperinf_data <- function(data,
                                ...) {
   mat = clean_data(data)
   mat[mat == 2] = 0.5
+  if(is.matrix(data) & !is.null(tree)) {
+    message("You've given me a matrix and a tree, but to plot tree-linked data I need a dataframe with IDs in the first column!")
+    tree = NULL
+  }
   if(!is.null(tree)) {
     df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+    if(!setequal(df$ID, tree$tip.label)) {
+      message("Warning: data IDs don't match tree tip labels. Unexpected behaviour will result.")
+    }
     c.tree = hypertrapsct::curate.tree(tree, df)
     out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, ...)
   } else {
