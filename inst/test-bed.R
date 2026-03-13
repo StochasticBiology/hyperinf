@@ -52,7 +52,7 @@ plot_hyperinf_comparative(list(fit.1, fit.2))
 # compare summary "bubble" plots
 plot_hyperinf_bubbles(list(fit.1, fit.2), p.scale = 0.2)
 # compare bootstrapped bubble plots
-plot_hyperinf_bootstrap(fit.1, fit.2)
+plot_hyperinf_bootstrap(fit.1, fit.2, p.scale = 0.2)
 
 # try some different approaches
 fit.1 = hyperinf(data)

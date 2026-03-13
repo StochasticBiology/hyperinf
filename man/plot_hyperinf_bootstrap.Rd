@@ -4,12 +4,14 @@
 \alias{plot_hyperinf_bootstrap}
 \title{Comparative bubble plot for bootstrapped fitted models}
 \usage{
-plot_hyperinf_bootstrap(fit.1, fit.2)
+plot_hyperinf_bootstrap(fit.1, fit.2, ...)
 }
 \arguments{
 \item{fit.1}{A fitted hypercubic inference models with bootstrap info (output from hyperinf)}
 
 \item{fit.2}{A fitted hypercubic inference models with bootstrap info (output from hyperinf)}
+
+\item{...}{other arguments to pass to plot_hypercube_bubbles}
 }
 \value{
 A ggplot object

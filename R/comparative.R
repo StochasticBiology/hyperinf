@@ -49,9 +49,15 @@ hyperinf_bubbles = function(fit) {
     c.df$change = this.fit$L-log(c.df$To-c.df$From, base=2)
     bins = sapply(c.df$From, DecToBin, len=this.fit$L)
     c.df$level = colSums(bins)
-    bp = data.frame(feature=c.df$change,
+    bp.tmp = data.frame(feature=c.df$change,
                     order=c.df$level+1,
                     prob=c.df$Flux)
+    bp = bp.tmp[!duplicated(bp.tmp[,1:2]),1:2]
+    bp$prob = 0
+    for(i in 1:nrow(bp.tmp)) {
+      ref = which(bp$feature == bp.tmp$feature[i] & bp$order == bp.tmp$order[i])
+      bp$prob[ref] = bp$prob[ref] + bp.tmp$prob[i]
+    }
   }
   if(fit.type == "hyperhmm") {
     bp = this.fit$stats
@@ -92,16 +98,32 @@ plot_hyperinf_bubbles = function(fits,
                                  expt.names = NULL, fill.name = "Experiment",
                                  feature.names = NULL) 
 {
+ # if(FALSE) {
+    
+   expt.refs = c()
+  use.fits = list()
+  for(i in 1:length(fits)) {
+    if("boots" %in% names(fits[[i]])) {
+      expt.refs = c(expt.refs, rep(i, length(fits[[i]]$boots)))
+      use.fits = c(use.fits, fits[[i]]$boots)
+    } else {
+      expt.refs = c(expt.refs, i)
+      use.fits[[length(use.fits)+1]] = fits[[i]]
+    }
+  }
+  fits = use.fits
+ # } 
+#  expt.refs = 1:length(fits)
   if (bins == 0) {
     toplot = data.frame()
     for (i in 1:length(fits)) {
       tmp = hyperinf_bubbles(fits[[i]])
       tmp$expt = i
       if (length(expt.names) == 0) {
-        tmp$exptname = i
+        tmp$exptname = expt.refs[i]
       }
       else {
-        tmp$exptname = expt.names[i]
+        tmp$exptname = expt.names[expt.refs[i]]
       }
       toplot = rbind(toplot, tmp)
     }
@@ -289,10 +311,11 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
 #'
 #' @param fit.1 A fitted hypercubic inference models with bootstrap info (output from hyperinf)
 #' @param fit.2 A fitted hypercubic inference models with bootstrap info (output from hyperinf)
+#' @param ... other arguments to pass to plot_hypercube_bubbles
 #'
 #' @return A ggplot object
 #' @export
-plot_hyperinf_bootstrap = function(fit.1, fit.2) {
+plot_hyperinf_bootstrap = function(fit.1, fit.2, ...) {
   if(!("boots" %in% names(fit.1) & "boots" %in% names(fit.2) )) {
     message("This doesn't look like a comparable pair of model fits")
     return(ggplot2::ggplot())
@@ -327,8 +350,7 @@ plot_hyperinf_bootstrap = function(fit.1, fit.2) {
     if(g1$min > g2$max | g1$max < g2$min) { m$sig[i] = 1 }
   }
 
-  plot_hyperinf_bubbles(boots, p.scale = 0.1) + 
-    ggplot2::geom_point(data=m[m$sig==1,], ggplot2::aes(x=order, y=feature+0.15, group=1, fill="*"), shape="*", size=12) +
-    ggplot2::theme(legend.position="none")
+  plot_hyperinf_bubbles(list(fit.1, fit.2), ...) + 
+    ggplot2::geom_point(data=m[m$sig==1,], ggplot2::aes(x=order, y=feature+0.15, group=1, fill="no\noverlap"), shape="*", size=12) 
 }
 
