@@ -22,6 +22,31 @@ Wrapper function `hyperinf` produces fitted hypercubic inference models from dat
 <img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/828cf552-875b-4219-9e3d-494b0c56d8c7" />
 </p>
 
+This will check and demo some of the functionality, based on HyperHMM:
+
+```
+library(hyperinf)
+
+# construct a simple dataset
+data = matrix(rep(c(0,0,1, 0,1,1, 1,1,1), 10), byrow = TRUE, ncol=3, nrow=30)
+
+# do model fits with bootstrapping to this dataset and its "inverse"
+fit.1 = hyperinf(data, boot.parallel = 50)
+fit.2 = hyperinf(1-data, boot.parallel = 50)
+
+# plot the data
+plot_hyperinf_data(data)
+# plot a single model fit
+plot_hyperinf(fit.1)
+# compare transition networks
+plot_hyperinf_comparative(list(fit.1, fit.2))
+# compare summary "bubble" plots
+plot_hyperinf_bubbles(list(fit.1, fit.2), p.scale = 0.2)
+# compare bootstrapped bubble plots
+plot_hyperinf_bootstrap(fit.1, fit.2)
+```
+
+
 References
 ---
 [1] Aga, O.N., Brun, M., Dauda, K.A., Diaz-Uriarte, R., Giannakis, K. and Johnston, I.G., 2024. HyperTraPS-CT: Inference and prediction for accumulation pathways with flexible data and model structures. PLOS Computational Biology, 20(9), p.e1012393.
