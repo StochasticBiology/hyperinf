@@ -1,3 +1,5 @@
+# tests used in pre-March 2026 development; superceded by test-bed.R
+
 set.seed(4)
 my.tree = ape::rtree(4)
 my.df = data.frame(label = my.tree$tip.label,
