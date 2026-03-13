@@ -22,7 +22,7 @@ Wrapper function `hyperinf` produces fitted hypercubic inference models from dat
 <img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/828cf552-875b-4219-9e3d-494b0c56d8c7" />
 </p>
 
-This will check and demo some of the functionality, based on HyperHMM:
+This will check and demo some of the functionality, based on HyperHMM. A more illustrative test bed is in `inst/test-bed.R`.
 
 ```
 library(hyperinf)
