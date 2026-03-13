@@ -29,7 +29,7 @@ clean_data = function(data) {
     # Check if any entry is not 0, 1, or "?"
     # Coerce factors to character
     first_col_char <- as.character(unlist(strsplit(first_col, "")))
-    invalid_entries <- !first_col_char %in% c("0", "1", "?")
+    invalid_entries <- !first_col_char %in% c("0", "1", "?", NA)
     
     if (any(invalid_entries)) {
       # Use columns 2 onward
@@ -51,6 +51,7 @@ clean_data = function(data) {
   # Optionally coerce to numeric if needed
   # Convert "?" to 2
   mat[mat == "?"] <- 2
+  mat[is.na(mat)] <- 2
   mat <- apply(mat, c(1,2), function(x) as.numeric(x))
   
   rownames(mat) = colnames(mat) = NULL
@@ -107,7 +108,7 @@ hyperinf <- function(data,
   L = ncol(mat)
   
   uncertainty = FALSE
-  if(any(mat == 2) | any(mat == -1)) {
+  if(any(is.na(mat)) | any(mat == 2) | any(mat == -1)) {
     uncertainty = TRUE
   }
   
@@ -127,6 +128,7 @@ hyperinf <- function(data,
       if ("independent.transitions" %in% names(dots)) {
         it = dots$independent.transitions
       }
+      df[df==2 | df == -1] = "?"
       c.tree = hyperlau::curate.uncertain.tree(tree, df, independent.transitions = it)
       if(method == "") {
         if(L < 10) {
@@ -139,6 +141,9 @@ hyperinf <- function(data,
       }
     } else {
       c.tree = hypertrapsct::curate.tree(tree, df)
+    }
+    if(nrow(c.tree$dests) < 2) {
+      message("Warning: less than 2 independent transitions found! Results may not be what you expect.")
     }
   }
   
@@ -207,6 +212,10 @@ hyperinf <- function(data,
       Sys.sleep(3)
       method = "hypertraps"
     }
+  }
+  
+  if(boot.parallel > 0 & !(method %in% c("hyperlau", "hyperhmm"))) {
+    message("Warning: parallel bootstrapping only supported for HyperHMM and HyperLAU!")
   }
   
   if(method == "hypermk") {
@@ -562,7 +571,9 @@ plot_hyperinf_data <- function(data,
     if(!setequal(df$ID, tree$tip.label)) {
       message("Warning: data IDs don't match tree tip labels. Unexpected behaviour will result.")
     }
-    c.tree = hypertrapsct::curate.tree(tree, df)
+    df[df == 0.5] = "?"
+    c.tree = hyperlau::curate.uncertain.tree(tree, df, independent.transitions = FALSE)
+    colnames(c.tree$data)[1] = "label"
     out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, ...)
   } else {
     df <- expand.grid(
