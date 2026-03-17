@@ -98,9 +98,11 @@ plot_hyperinf_bubbles = function(fits,
                                  expt.names = NULL, fill.name = "Experiment",
                                  feature.names = NULL) 
 {
- # if(FALSE) {
-    
-   expt.refs = c()
+  # check to see if we've just been passed one model fit
+  if("L" %in% names(fits)) {
+    fits = list(fits)
+  }
+  expt.refs = c()
   use.fits = list()
   for(i in 1:length(fits)) {
     if("boots" %in% names(fits[[i]])) {
@@ -112,7 +114,7 @@ plot_hyperinf_bubbles = function(fits,
     }
   }
   fits = use.fits
- # } 
+
 #  expt.refs = 1:length(fits)
   if (bins == 0) {
     toplot = data.frame()
