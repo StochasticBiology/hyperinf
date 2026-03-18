@@ -235,7 +235,7 @@ plot_hyperinf_compare_orderings = function(fit.1, fit.2, threshold=0.2, ...) {
   om.r.df = data.frame(id=1:nrow(om.r), as.data.frame(om.r))
   b.plot = plot_hyperinf_bubbles(list(fit.1, fit.2), ...)
   b.plot + 
-    geom_point(data = om.df, aes(x=col, y=row, fill=".", group=".")) +
-    geom_segment(data = om.r.df, aes(x=-id/2, y=row, xend=-id/2, yend=col, fill=".", group="."))
+    ggplot2::geom_point(data = om.df, ggplot2::aes(x=col, y=row, fill=".", group=".")) +
+    ggplot2::geom_segment(data = om.r.df, ggplot2::aes(x=-id/2, y=row, xend=-id/2, yend=col, fill=".", group="."))
 }
 
