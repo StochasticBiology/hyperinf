@@ -2,6 +2,7 @@
 
 export(clean_data)
 export(compare_orderings)
+export(fit_properties)
 export(full_to_squared)
 export(full_to_squared_fit)
 export(hyperinf)
@@ -16,3 +17,4 @@ export(plot_hyperinf_comparative)
 export(plot_hyperinf_compare_orderings)
 export(plot_hyperinf_data)
 export(plot_hyperinf_interactions)
+importFrom(hyperdags,fit_properties)
