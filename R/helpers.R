@@ -94,7 +94,7 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
     srcs = strsplit(this.ends[,1], split="")
     dests = strsplit(this.ends[,2], split="")
     for(i in 1:nrow(this.ends)) {
-      igraph::E(graphD)$label[i] = paste0("+", paste0(labels[which(srcs[[i]]!=dests[[i]])], collapse="\n"), collapse="")
+      igraph::E(graphD)$label[i] = paste0(paste0("+", labels[which(srcs[[i]]!=dests[[i]])]), collapse="\n")
     }
     
     plot.graph = graphD

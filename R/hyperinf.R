@@ -525,7 +525,7 @@ plot_hyperinf = function(fit,
     out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
       ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_color=FluxSD/Flux, label=label),
                              label_size = 3, label_colour="black",
-                             label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
+                             label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +
       ggraph::scale_edge_width(limits=c(0,NA)) + 
       ggraph::scale_edge_color_gradient(name = "CV", low = "#AAAAFF", high = "#FFAAAA", na.value = "lightgrey", limits=c(0,maxcv)) +
       ggraph::theme_graph(base_family="sans")
@@ -533,7 +533,7 @@ plot_hyperinf = function(fit,
     out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
       ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label),
                              label_size = 3, label_colour="black", color="#AAAAFF",
-                             label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
+                             label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +
       ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
       ggraph::theme_graph(base_family="sans")
   }
