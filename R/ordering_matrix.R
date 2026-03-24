@@ -232,7 +232,12 @@ plot_hyperinf_compare_orderings = function(fit.1, fit.2, threshold=0.2, ...) {
   om = compare_orderings(fit.1, fit.2, type="absolute", threshold=threshold)
   om.df = as.data.frame(om)
   om.r = om.r[om.r[,1] < om.r[,2],]
-  om.r.df = data.frame(id=1:nrow(om.r), as.data.frame(om.r))
+  if(nrow(om.r) >= 1) {
+    om.r.df = data.frame(id=1:nrow(om.r), as.data.frame(om.r))
+  } else {
+    om.r.df = data.frame(id=0, row=0, col=0)
+    om.r.df = om.r.df[NULL,]
+  }
   b.plot = plot_hyperinf_bubbles(list(fit.1, fit.2), ...)
   b.plot + 
     ggplot2::geom_point(data = om.df, ggplot2::aes(x=col, y=row, fill=".", group=".")) +
