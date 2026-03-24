@@ -1,3 +1,7 @@
+#' @importFrom hyperdags fit_properties
+#' @export
+hyperdags::fit_properties
+
 # get a graph object reflecting a (plottable) transition network from a fitted model
 get_plot_graph = function(fit, fit.type, uncertainty = FALSE, 
                           reversible = FALSE, threshold = 0.05) {
