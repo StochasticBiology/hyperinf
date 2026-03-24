@@ -377,8 +377,9 @@ hyperinf <- function(data,
       dests = apply(c.tree$dests, 1, paste0, collapse="")
       fit = hyperdags::simplest_DAG(srcs, dests)
     } else {
+      srcs = apply(matrix(0, nrow=nrow(mat), ncol=ncol(mat)), 1, paste0, collapse="")
       dests = apply(mat, 1, paste0, collapse="")
-      fit = hyperdags::simplest_arborescence(dests)
+      fit = hyperdags::simplest_DAG(srcs, dests)
     }
   }
   return(fit)
