@@ -14,6 +14,9 @@ clean_data = function(data) {
   if (!is.matrix(data) && !is.data.frame(data)) {
     stop("`data` must be a matrix or data.frame")
   }
+  if(nrow(data) < 2 | ncol(data) < 2) {
+    stop("There's not enough data here; nothing to do!")
+  }
   
   x = data[1,ncol(data)]
   if(is.character(x)) {
