@@ -105,13 +105,20 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
     }
     graphD.layers = sapply(igraph::V(graphD)$name, stringr::str_count, "1")
     L = stringr::str_length(igraph::V(graphD)$name[1])
+    this.ends = igraph::ends(graphD, es=igraph::E(graphD))
+    srcs = strsplit(this.ends[,1], split="")
+    dests = strsplit(this.ends[,2], split="")
+    
+    for(i in 1:length(igraph::V(graphD)$name)) {
+      igraph::V(graphD)$name[i] = BinToDecS(igraph::V(graphD)$name[i])
+    }
+    names(graphD.layers) = igraph::V(graphD)$name
+
     labels = feature.names #as.character(1:L)
     graphD.size = igraph::neighborhood.size(graphD, L+1, mode="out")
     igraph::E(graphD)$Flux = as.numeric(graphD.size[igraph::ends(graphD, es = igraph::E(graphD), names = FALSE)[, 2]])
     igraph::E(graphD)$Flux = igraph::E(graphD)$Flux/max(igraph::E(graphD)$Flux)
-    this.ends = igraph::ends(graphD, es=igraph::E(graphD))
-    srcs = strsplit(this.ends[,1], split="")
-    dests = strsplit(this.ends[,2], split="")
+
     for(i in 1:nrow(this.ends)) {
       igraph::E(graphD)$label[i] = paste0(paste0("+", labels[which(srcs[[i]]!=dests[[i]])]), collapse="\n")
     }
