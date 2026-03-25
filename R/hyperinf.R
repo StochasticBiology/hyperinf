@@ -566,6 +566,8 @@ plot_hyperinf = function(fit,
 #'
 #' @param data A required matrix or data.frame containing binary observations
 #' @param tree Optional tree object
+#' @param hjust Numeric (default 1), horizontal justification for rotated feature labels
+#' @param bmargin Numeric (default 40), bottom margin size to prevent labels being truncated
 #' @param ... other options to pass to plotHypercube.curated.tree (if tree is provided)
 #'
 #' @return A ggplot object
@@ -576,6 +578,8 @@ plot_hyperinf = function(fit,
 plot_hyperinf_data <- function(data,
                                tree = NULL,
                                feature.names = TRUE,
+                               hjust = 1,
+                               bmargin = 40,
                                ...) {
   mat = clean_data(data)
   L = ncol(mat)
@@ -609,7 +613,8 @@ plot_hyperinf_data <- function(data,
     c.tree = hyperlau::curate.uncertain.tree(tree, df, independent.transitions = FALSE)
     colnames(c.tree$data)[1] = "label"
     colnames(c.tree$data)[2:ncol(c.tree$data)] = feature.names 
-    out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, ...)
+    out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, hjust=hjust, ...) +
+      ggplot2::theme(plot.margin = ggplot2::margin(t = 5, r = 5, b = bmargin, l = 5))
   } else {
     df <- expand.grid(
       x = seq_len(ncol(mat)),
@@ -640,9 +645,11 @@ plot_hyperinf_data <- function(data,
       ggplot2::labs(x="Feature", y="Samples")
     
     if(length(feature.names) == L) {
-      out.plot = out.plot + scale_x_continuous(breaks = 1:L,
+      out.plot = out.plot + ggplot2::scale_x_continuous(breaks = 1:L,
                                                labels = feature.names) +
-        theme(axis.text.x = element_text(angle = 90))
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust=hjust),
+                       plot.margin = ggplot2::margin(t = 5, r = 5, b = bmargin, l = 5)) 
+        
     }
   }
   
