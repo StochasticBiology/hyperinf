@@ -4,8 +4,12 @@ hyperdags::fit_properties
 
 # get a graph object reflecting a (plottable) transition network from a fitted model
 get_plot_graph = function(fit, fit.type, uncertainty = FALSE, 
-                          reversible = FALSE, threshold = 0.05) {
+                          reversible = FALSE, threshold = 0.05,
+                          feature.names = NULL) {
   fluxes = NULL
+  if(length(feature.names) != fit$L) {
+    feature.names = as.character(1:fit$L)
+  }
   if(fit.type %in% c("mk", "hyperhmm", "hyperlau", "hypertraps")) {
     # our goal is now to get a From/To/Flux dataframe and eventually a graph to plot
     if(fit.type == "mk") {
@@ -66,14 +70,15 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
       }
       # decimal, 0-indexed labels
     }
-    
+    fluxes = fluxes[fluxes$Flux > 0,]
     L = fit$L
     fluxes$From.b = sapply(fluxes$From, DecToBinS, len=L)
     fluxes$To.b = sapply(fluxes$To, DecToBinS, len=L)
     fluxes$Change = L-log(abs(fluxes$From-fluxes$To), base=2)
-    fluxes$label = paste0("+", fluxes$Change)
+    fluxes$Changelabel = feature.names[fluxes$Change]
+    fluxes$label = paste0("+", fluxes$Changelabel)
     if(reversible == TRUE) {
-      fluxes$label[which(fluxes$From > fluxes$To)] = paste0("-", fluxes$Change[which(fluxes$From > fluxes$To)])
+      fluxes$label[which(fluxes$From > fluxes$To)] = paste0("-", fluxes$Changelabel[which(fluxes$From > fluxes$To)])
     }
     fluxes = fluxes[fluxes$Flux > threshold,]
     states = unique(c(fluxes$From, fluxes$To))
@@ -90,7 +95,7 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
     }
     graphD.layers = sapply(igraph::V(graphD)$name, stringr::str_count, "1")
     L = stringr::str_length(igraph::V(graphD)$name[1])
-    labels = as.character(1:L)
+    labels = feature.names #as.character(1:L)
     graphD.size = igraph::neighborhood.size(graphD, L+1, mode="out")
     igraph::E(graphD)$Flux = as.numeric(graphD.size[igraph::ends(graphD, es = igraph::E(graphD), names = FALSE)[, 2]])
     igraph::E(graphD)$Flux = igraph::E(graphD)$Flux/max(igraph::E(graphD)$Flux)

@@ -109,7 +109,10 @@ hyperinf <- function(data,
     mat = 1-mat
   }
   L = ncol(mat)
-  
+  feature.names = colnames(data[,(ncol(data)-L+1):ncol(data)])
+  if(length(feature.names) != L) {
+    feature.names = NULL
+  }
   uncertainty = FALSE
   if(any(is.na(mat)) | any(mat == 2) | any(mat == -1)) {
     uncertainty = TRUE
@@ -381,7 +384,10 @@ hyperinf <- function(data,
       dests = apply(mat, 1, paste0, collapse="")
       fit = hyperdags::simplest_DAG(srcs, dests)
     }
+    fit$L = ncol(mat)
   }
+  fit$feature.names = feature.names
+
   return(fit)
 }
 
@@ -448,6 +454,7 @@ compute_hypertraps_fluxes = function(my.post,
 #' @param plot.type A character string, either empty (default) to allow standardised plot, or "native" to produce plots from the source algorithm
 #' @param threshold Double (default 0.05), probability flux below which edges will not be plotted
 #' @param uncertainty Boolean, whether to visualise uncertainty over bootstraps (only for HyperLAU and HyperHMM)
+#' @param feature.names Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.
 #'
 #' @return A ggplot object
 #' @examples
@@ -458,7 +465,8 @@ compute_hypertraps_fluxes = function(my.post,
 plot_hyperinf = function(fit,
                          plot.type = "",
                          threshold = 0.05,
-                         uncertainty = "") {
+                         uncertainty = "",
+                         feature.names = TRUE) {
   if("best.graph" %in% names(fit)) {
     fit.type = "DAG"
   } else if("raw.graph" %in% names(fit)) {
@@ -475,6 +483,16 @@ plot_hyperinf = function(fit,
     message("Didn't recognise this model")
     return(ggplot2::ggplot())
   }
+  
+  if(length(feature.names) == 1) {
+    if(feature.names == TRUE) { 
+      feature.names = fit$feature.names 
+    } else {
+      feature.names = NULL
+    } 
+  } else if(length(feature.names) != fit$L) {
+      feature.names = NULL
+    }
   
   if(uncertainty != FALSE) {
     if(fit.type == "hyperlau") {
@@ -508,7 +526,7 @@ plot_hyperinf = function(fit,
                                                            no.times = TRUE, edge.label.size = 3)
     }
   } else {
-    tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold)
+    tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold, feature.names)
     plot.graph = tmp1[["plot.graph"]]
     layers = tmp1[["layers"]]
     fluxes = tmp1[["fluxes"]]
