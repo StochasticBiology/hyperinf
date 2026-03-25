@@ -614,7 +614,8 @@ plot_hyperinf_data <- function(data,
     colnames(c.tree$data)[1] = "label"
     colnames(c.tree$data)[2:ncol(c.tree$data)] = feature.names 
     out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, hjust=hjust, ...) +
-      ggplot2::theme(plot.margin = ggplot2::margin(t = 5, r = 5, b = bmargin, l = 5))
+      ggplot2::theme(plot.margin = ggplot2::margin(t = 5, r = 5, b = bmargin, l = 5)) +
+      ggplot2::coord_cartesian(clip = "off")
   } else {
     df <- expand.grid(
       x = seq_len(ncol(mat)),
@@ -648,7 +649,8 @@ plot_hyperinf_data <- function(data,
       out.plot = out.plot + ggplot2::scale_x_continuous(breaks = 1:L,
                                                labels = feature.names) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust=hjust),
-                       plot.margin = ggplot2::margin(t = 5, r = 5, b = bmargin, l = 5)) 
+                       plot.margin = ggplot2::margin(t = 5, r = 5, b = bmargin, l = 5)) +
+        ggplot2::coord_cartesian(clip = "off")
         
     }
   }
