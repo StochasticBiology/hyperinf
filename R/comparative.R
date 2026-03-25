@@ -81,7 +81,7 @@ hyperinf_bubbles = function(fit) {
 #' @param sqrt.trans Boolean (default FALSE), whether to sqrt-transform the probability to get the bubble radius
 #' @param bins Integer (default 0, off), how many bins to divide the ordering axis into
 #' @param expt.names Optional vector of labels for each element of the fit list
-#' @param feature.names Optional vector of labels for the L features in each fit
+#' @param feature.names Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.
 #' @param fill.name Character (default "Experiment"), the label to use for the group type
 #' 
 #' @return A ggplot object
@@ -96,7 +96,7 @@ plot_hyperinf_bubbles = function(fits,
                                  thetastep = 10, p.scale = 1, 
                                  sqrt.trans = FALSE, bins = 0, 
                                  expt.names = NULL, fill.name = "Experiment",
-                                 feature.names = NULL) 
+                                 feature.names = TRUE) 
 {
   # check to see if we've just been passed one model fit
   if("L" %in% names(fits)) {
@@ -185,7 +185,13 @@ plot_hyperinf_bubbles = function(fits,
     ggplot2::geom_polygon() + ggplot2::theme_light() + ggplot2::labs(fill = fill.name, 
                                                                      x = "Ordinal Time", y = "")
   if(length(feature.names) != 0) {
-    this.plot = this.plot + scale_y_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
+    if(length(feature.names) == 1) {
+      if(feature.names == TRUE) {
+        this.plot = this.plot + scale_y_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
+      }
+    } else if(length(feature.names) == fits[[1]]$L) {
+      this.plot = this.plot + scale_y_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
+    }
   }
   return(this.plot)
 }
@@ -195,7 +201,7 @@ plot_hyperinf_bubbles = function(fits,
 #' @param fits A list of fitted hypercubic inference models (output from hyperinf)
 #' @param threshold Double (default 0.05), probability flux below which edges will not be plotted
 #' @param expt.names Optional vector of labels for each element of the fit list
-#' @param feature.names Optional vector of labels for the L features in each fit
+#' @param feature.names Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.
 #' @param style Character (default "limited") giving plot style. "limited" condenses bootstrap resamples into single edges; others plot each as a different arc.
 #' @param bend Numeric (default 0.5) the strength of the bend separating edges between the same pair of nodes
 #' @param label_size Numeric (default 2) the size of edge labels
@@ -209,7 +215,7 @@ plot_hyperinf_bubbles = function(fits,
 #' @export
 plot_hyperinf_comparative = function(fits, threshold=0.05,
                                      expt.names=NULL,
-                                     feature.names=NULL,
+                                     feature.names=TRUE,
                                      style="limited",
                                      bend = 0.5,
                                      label_size = 2) {
@@ -234,7 +240,16 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
       return(ggplot2::ggplot())
     }
     
-    tmp = get_plot_graph(this.fit, fit.type)
+    if(length(feature.names) == 1) {
+      if(feature.names == TRUE) {
+        feature.names = this.fit$feature.names
+      } else {
+        feature.names = NULL
+      }
+    } else if(length(feature.names) != this.fit$L) {
+      feature.names = NULL
+    }
+    tmp = get_plot_graph(this.fit, fit.type, feature.names = feature.names)
     plot.graphs[[i]] = tmp[["plot.graph"]]
     layers[[i]] = tmp[["layers"]]
     if(length(expt.names) != length(fits)) { this.src = i }
