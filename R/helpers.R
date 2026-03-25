@@ -2,7 +2,17 @@
 #' @export
 hyperdags::fit_properties
 
-# get a graph object reflecting a (plottable) transition network from a fitted model
+#' Get a graph object reflecting a (plottable) transition network from a fitted model
+#'
+#' @param fit A fitted hypercubic inference model (output from hyperinf)
+#' @param fit.type Character vector giving type of fit
+#' @param uncertainty Boolean, are we bootstrapping
+#' @param reversible Boolean, are we consider reversible steps
+#' @param threshold Numeric (default 0.05), threshold to place on fluxes
+#' @param feature.names NULL or character vector (default NULL). If vector of length L, use those labels.
+#' 
+#' @return A graph object
+#' @export
 get_plot_graph = function(fit, fit.type, uncertainty = FALSE, 
                           reversible = FALSE, threshold = 0.05,
                           feature.names = NULL) {

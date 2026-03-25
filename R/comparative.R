@@ -187,10 +187,10 @@ plot_hyperinf_bubbles = function(fits,
   if(length(feature.names) != 0) {
     if(length(feature.names) == 1) {
       if(feature.names == TRUE) {
-        this.plot = this.plot + scale_y_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
+        this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
       }
     } else if(length(feature.names) == fits[[1]]$L) {
-      this.plot = this.plot + scale_y_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
+      this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
     }
   }
   return(this.plot)
