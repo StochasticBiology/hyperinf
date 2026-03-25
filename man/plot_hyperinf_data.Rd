@@ -4,12 +4,23 @@
 \alias{plot_hyperinf_data}
 \title{Plot some data for accumulation modelling}
 \usage{
-plot_hyperinf_data(data, tree = NULL, ...)
+plot_hyperinf_data(
+  data,
+  tree = NULL,
+  feature.names = TRUE,
+  hjust = 1,
+  bmargin = 40,
+  ...
+)
 }
 \arguments{
 \item{data}{A required matrix or data.frame containing binary observations}
 
 \item{tree}{Optional tree object}
+
+\item{hjust}{Numeric (default 1), horizontal justification for rotated feature labels}
+
+\item{bmargin}{Numeric (default 40), bottom margin size to prevent labels being truncated}
 
 \item{...}{other options to pass to plotHypercube.curated.tree (if tree is provided)}
 }
