@@ -14,7 +14,7 @@ plot_hyperinf_bubbles(
   bins = 0,
   expt.names = NULL,
   fill.name = "Experiment",
-  feature.names = NULL
+  feature.names = TRUE
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ plot_hyperinf_bubbles(
 
 \item{fill.name}{Character (default "Experiment"), the label to use for the group type}
 
-\item{feature.names}{Optional vector of labels for the L features in each fit}
+\item{feature.names}{Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.}
 }
 \value{
 A ggplot object

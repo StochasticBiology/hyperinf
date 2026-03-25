@@ -8,7 +8,7 @@ plot_hyperinf_comparative(
   fits,
   threshold = 0.05,
   expt.names = NULL,
-  feature.names = NULL,
+  feature.names = TRUE,
   style = "limited",
   bend = 0.5,
   label_size = 2
@@ -21,7 +21,7 @@ plot_hyperinf_comparative(
 
 \item{expt.names}{Optional vector of labels for each element of the fit list}
 
-\item{feature.names}{Optional vector of labels for the L features in each fit}
+\item{feature.names}{Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.}
 
 \item{style}{Character (default "limited") giving plot style. "limited" condenses bootstrap resamples into single edges; others plot each as a different arc.}
 
