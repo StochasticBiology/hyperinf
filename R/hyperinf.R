@@ -575,8 +575,10 @@ plot_hyperinf = function(fit,
 #' @export
 plot_hyperinf_data <- function(data,
                                tree = NULL,
+                               feature.names = TRUE,
                                ...) {
   mat = clean_data(data)
+  L = ncol(mat)
   mat[mat == 2] = 0.5
   if(is.matrix(data) & !is.null(tree)) {
     if(is.null(rownames(data))) {
@@ -584,6 +586,16 @@ plot_hyperinf_data <- function(data,
       tree = NULL
     }
   }
+  if(length(feature.names) == 1) {
+    if(feature.names == TRUE) {
+      feature.names = colnames(data[,(ncol(data)-L+1):ncol(data)])
+    } else {
+      feature.names = NULL
+    }
+  } else if(length(feature.names) != L) {
+    feature.names = NULL
+  }
+    
   if(!is.null(tree)) {
     if(is.matrix(data)) {
       df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
@@ -596,6 +608,7 @@ plot_hyperinf_data <- function(data,
     df[df == 0.5] = "?"
     c.tree = hyperlau::curate.uncertain.tree(tree, df, independent.transitions = FALSE)
     colnames(c.tree$data)[1] = "label"
+    colnames(c.tree$data)[2:ncol(c.tree$data)] = feature.names 
     out.plot = hypertrapsct::plotHypercube.curated.tree(c.tree, scale.fn = NULL, ...)
   } else {
     df <- expand.grid(
@@ -625,6 +638,12 @@ plot_hyperinf_data <- function(data,
                      axis.ticks.y = ggplot2::element_blank(),
                      axis.text.y  = ggplot2::element_blank()) +
       ggplot2::labs(x="Feature", y="Samples")
+    
+    if(length(feature.names) == L) {
+      out.plot = out.plot + scale_x_continuous(breaks = 1:L,
+                                               labels = feature.names) +
+        theme(axis.text.x = element_text(angle = 90))
+    }
   }
   
   return(out.plot)
