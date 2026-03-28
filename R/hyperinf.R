@@ -75,6 +75,8 @@ clean_data = function(data) {
 #' @param losses Boolean (default FALSE) whether to consider losses rather than gains of features
 #' @param method A character string, either empty (default) to allow automatic choice of algorithm, or one of the options in the text above
 #' @param reversible Boolean (default FALSE) whether to allow reversible transitions
+#' @param auto.cluster Boolean (default FALSE) whether to cluster the dataset by similarity to estimate relatedness
+#' @param auto.cluster.method Character (default "clustering") method to use for clustering; see binary_phylogeny
 #' @param boot.parallel Integer (default 0) number of bootstrap resamples to run in parallel (only meaningful for HyperHMM and HyperLAU)
 #' @param ... other options to pass to the inference method used. For example, nboot for HyperHMM, length/kernel/walkers for HyperTraPS.
 #'
@@ -88,6 +90,8 @@ hyperinf <- function(data,
                      losses = FALSE,
                      method = "",
                      reversible = FALSE,
+                     auto.cluster = FALSE,
+                     auto.cluster.method = "clustering",
                      boot.parallel = 0,
                      ...) {
   
@@ -98,6 +102,15 @@ hyperinf <- function(data,
   
   mat = clean_data(data)
   
+  if(auto.cluster == TRUE) {
+    if(!is.null(tree)) {
+      message("You provided a tree but also asked me to auto-cluster the data. I'm doing the latter and ignoring the tree.")
+    }
+    clustered = binary_phylogeny(mat, method=auto.cluster.method)
+    data = clustered$data
+    mat = clean_data(data)
+    tree = clustered$tree
+  }
   if(is.matrix(data) & !is.null(tree)) {
     if(is.null(rownames(data))) {
       message("You've given me a matrix without rownames and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
@@ -568,6 +581,8 @@ plot_hyperinf = function(fit,
 #' @param tree Optional tree object
 #' @param hjust Numeric (default 1), horizontal justification for rotated feature labels
 #' @param bmargin Numeric (default 40), bottom margin size to prevent labels being truncated
+#' @param auto.cluster Boolean (default FALSE) whether to cluster the dataset by similarity to estimate relatedness
+#' @param auto.cluster.method Character (default "clustering") method to use for clustering; see binary_phylogeny
 #' @param ... other options to pass to plotHypercube.curated.tree (if tree is provided)
 #'
 #' @return A ggplot object
@@ -580,8 +595,11 @@ plot_hyperinf_data <- function(data,
                                feature.names = TRUE,
                                hjust = 1,
                                bmargin = 40,
+                               auto.cluster = FALSE,
+                               auto.cluster.method = "clustering",
                                ...) {
   mat = clean_data(data)
+  
   L = ncol(mat)
   mat[mat == 2] = 0.5
   if(is.matrix(data) & !is.null(tree)) {
@@ -600,6 +618,15 @@ plot_hyperinf_data <- function(data,
     feature.names = NULL
   }
     
+  if(auto.cluster == TRUE) {
+    if(!is.null(tree)) {
+      message("You provided a tree but also asked me to auto-cluster the data. I'm doing the latter and ignoring the tree.")
+    }
+    clustered = binary_phylogeny(mat, method=auto.cluster.method)
+    data = clustered$data
+    mat = clean_data(data)
+    tree = clustered$tree
+  }
   if(is.null(feature.names)) {
     feature.names = 1:L
   }
