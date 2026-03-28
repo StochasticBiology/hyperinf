@@ -600,6 +600,9 @@ plot_hyperinf_data <- function(data,
     feature.names = NULL
   }
     
+  if(is.null(feature.names)) {
+    feature.names = 1:L
+  }
   if(!is.null(tree)) {
     if(is.matrix(data)) {
       df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
