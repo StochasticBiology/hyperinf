@@ -139,8 +139,13 @@ hyperinf <- function(data,
       colnames(df)[1] = "ID"
     }
     if(!setequal(df$ID, tree$tip.label)) {
-      message("Warning: data IDs don't match tree tip labels. This won't work!")
-      return("Error")
+      to.keep = which(tree$tip.label %in% df$ID)
+      tree = ape::keep.tip(tree, to.keep)
+      if(!setequal(df$ID, tree$tip.label)) {
+        message("Warning: data IDs don't match tree tip labels. This won't work!")
+        return("Error")
+      }
+      message("More tree tips than observations... dropping those without records.")
     }
     if(any(mat == 2) | any(mat == -1)) {
       it = TRUE
@@ -639,7 +644,13 @@ plot_hyperinf_data <- function(data,
       colnames(df)[1] = "ID"
     }
     if(!setequal(df$ID, tree$tip.label)) {
-      message("Warning: data IDs don't match tree tip labels. Unexpected behaviour will result.")
+      to.keep = which(tree$tip.label %in% df$ID)
+      tree = ape::keep.tip(tree, to.keep)
+      if(!setequal(df$ID, tree$tip.label)) {
+        message("Warning: data IDs don't match tree tip labels. Unexpected behaviour will result.")
+      } else {
+        message("More tree tips than observations... dropping those without records.")
+      }
     }
     df[df == 0.5] = "?"
     c.tree = hyperlau::curate.uncertain.tree(tree, df, independent.transitions = FALSE)

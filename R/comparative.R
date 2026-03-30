@@ -104,6 +104,7 @@ plot_hyperinf_bubbles = function(fits,
   }
   expt.refs = c()
   use.fits = list()
+  pulled.feature.names = fits[[1]]$feature.names
   for(i in 1:length(fits)) {
     if("boots" %in% names(fits[[i]])) {
       expt.refs = c(expt.refs, rep(i, length(fits[[i]]$boots)))
@@ -129,8 +130,7 @@ plot_hyperinf_bubbles = function(fits,
       }
       toplot = rbind(toplot, tmp)
     }
-  }
-  else {
+  } else {
     toplot = data.frame()
     for (i in 1:length(fits)) {
       tmp = hyperinf_bubbles(fits[[i]])
@@ -152,8 +152,7 @@ plot_hyperinf_bubbles = function(fits,
   if (transpose == TRUE) {
     toplot$x = toplot$feature
     toplot$y = toplot$order
-  }
-  else {
+  } else {
     toplot$x = toplot$order
     toplot$y = toplot$feature
   }
@@ -187,7 +186,7 @@ plot_hyperinf_bubbles = function(fits,
   if(length(feature.names) != 0) {
     if(length(feature.names) == 1) {
       if(feature.names == TRUE) {
-        this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
+        this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = pulled.feature.names)
       }
     } else if(length(feature.names) == fits[[1]]$L) {
       this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
