@@ -10,6 +10,8 @@ hyperinf(
   losses = FALSE,
   method = "",
   reversible = FALSE,
+  auto.cluster = FALSE,
+  auto.cluster.method = "clustering",
   boot.parallel = 0,
   ...
 )
@@ -24,6 +26,10 @@ hyperinf(
 \item{method}{A character string, either empty (default) to allow automatic choice of algorithm, or one of the options in the text above}
 
 \item{reversible}{Boolean (default FALSE) whether to allow reversible transitions}
+
+\item{auto.cluster}{Boolean (default FALSE) whether to cluster the dataset by similarity to estimate relatedness}
+
+\item{auto.cluster.method}{Character (default "clustering") method to use for clustering; see binary_phylogeny}
 
 \item{boot.parallel}{Integer (default 0) number of bootstrap resamples to run in parallel (only meaningful for HyperHMM and HyperLAU)}
 

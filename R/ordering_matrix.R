@@ -244,3 +244,107 @@ plot_hyperinf_compare_orderings = function(fit.1, fit.2, threshold=0.2, ...) {
     ggplot2::geom_segment(data = om.r.df, ggplot2::aes(x=-id/2, y=row, xend=-id/2, yend=col, fill=".", group="."))
 }
 
+
+#' Plot ordering matrices from fitted models
+#'
+#' @param fits A list of fitted hypercubic inference models (or single model)
+#' @param expt.names Optional vector of labels for each element of the fit list
+#' @param feature.names Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.
+#' @param thetastep Integer (default 5), the number of angular steps to take when drawing polygons for each bubble segment. Lower this for many comparisons.
+#' @param p.scale Numeric (default 1), the scaling factor to apply to the radius (probability) of bubbles
+#' @param sqrt.trans Boolean (default FALSE), whether to sqrt-transform the probability to get the bubble radius
+#' 
+#' @return A ggplot object comparing ordering matrices
+#' @export
+plot_hyperinf_ordering_matrices = function(fits,
+                                           expt.names = NULL,
+                                           feature.names = TRUE,
+                                           thetastep = 5,
+                                           p.scale = 0.5,
+                                           sqrt.trans = FALSE) {
+  if("L" %in% names(fits)) {
+    fits = list(fits)
+  }
+  
+  # convert matrix to dataframe
+  mat_to_df <- function(mat, type) {
+    expand.grid(
+      x = seq_len(ncol(mat)),
+      y = seq_len(nrow(mat))
+    ) |>
+      transform(
+        value = as.vector(mat),
+        type = type
+      )
+  }
+  
+  m = list()
+  df = data.frame()
+  for(i in 1:length(fits)) {
+  m[[i]] = ordering_matrix(fits[[i]]) 
+  tmp = mat_to_df(m[[i]], i)
+  df = rbind(df, tmp)
+  }
+  
+  # semicircle generator
+  semicircle <- function(x, y, r, index, nindex, n) {
+    
+   theta <- seq(2*pi*(index/nindex), 2*pi*((index+1)/nindex), length.out = thetastep+1)
+   tmp = data.frame(x=x,y=y) 
+   tmp = rbind(tmp, data.frame(
+      x = x + r*cos(theta),
+      y = y + r*sin(theta)
+    ))
+   tmp = rbind(tmp, data.frame(x=x,y=y))
+  }
+  
+  # build polygon data
+  poly_list <- lapply(seq_len(nrow(df)), function(i){
+    
+    row <- df[i,]
+    if(sqrt.trans == TRUE) {
+      val = sqrt(row$value)*p.scale
+    } else {
+      val = row$value*p.scale
+    }
+    sc <- semicircle(
+      row$x,
+      row$y,
+      val,
+      index = row$type,
+      nindex = length(fits)
+    )
+    
+    sc$value <- row$value
+    sc$id <- i
+    if(length(expt.names) == 0) {
+      sc$type = row$type 
+    } else {
+      sc$type = expt.names[row$type]
+    }
+    sc
+  })
+  
+  poly_df <- do.call(rbind, poly_list)
+  
+  # plot
+  this.plot = ggplot2::ggplot(poly_df, ggplot2::aes(x, y, group=id, fill=factor(type))) +
+    ggplot2::geom_polygon() +
+    #ggplot2::scale_fill_gradient2(low="blue", mid="white", high="red", midpoint=0.5) +
+    ggplot2::coord_equal() +
+    ggplot2::theme_minimal() + 
+    ggplot2::labs(fill = "Experiment", x = "Before", y = "After")
+  
+  if(length(feature.names) != 0) {
+    if(length(feature.names) == 1) {
+      if(feature.names == TRUE) {
+        this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
+        this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
+      }
+    } else if(length(feature.names) == fits[[1]]$L) {
+      this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
+      this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
+    }
+  }
+  return(this.plot)
+}

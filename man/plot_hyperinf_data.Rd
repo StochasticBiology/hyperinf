@@ -10,6 +10,8 @@ plot_hyperinf_data(
   feature.names = TRUE,
   hjust = 1,
   bmargin = 40,
+  auto.cluster = FALSE,
+  auto.cluster.method = "clustering",
   ...
 )
 }
@@ -21,6 +23,10 @@ plot_hyperinf_data(
 \item{hjust}{Numeric (default 1), horizontal justification for rotated feature labels}
 
 \item{bmargin}{Numeric (default 40), bottom margin size to prevent labels being truncated}
+
+\item{auto.cluster}{Boolean (default FALSE) whether to cluster the dataset by similarity to estimate relatedness}
+
+\item{auto.cluster.method}{Character (default "clustering") method to use for clustering; see binary_phylogeny}
 
 \item{...}{other options to pass to plotHypercube.curated.tree (if tree is provided)}
 }
