@@ -136,6 +136,7 @@ hyperinf <- function(data,
       df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
     } else {
       df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+      colnames(df)[1] = "ID"
     }
     if(!setequal(df$ID, tree$tip.label)) {
       message("Warning: data IDs don't match tree tip labels. This won't work!")
@@ -635,6 +636,7 @@ plot_hyperinf_data <- function(data,
       df = cbind(data.frame(ID = rownames(data)), as.data.frame(mat))
     } else {
       df = cbind(data.frame(ID = data[,1]), as.data.frame(mat))
+      colnames(df)[1] = "ID"
     }
     if(!setequal(df$ID, tree$tip.label)) {
       message("Warning: data IDs don't match tree tip labels. Unexpected behaviour will result.")
