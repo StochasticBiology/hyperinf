@@ -1,5 +1,6 @@
 library(hyperinf)
 library(phytools)
+library(ggpubr)
 
 # tests in the below. (c)ross-sectional data; (p)hylogenetic data; (u)ncertain data; (b)ootstrapping
 # HyperHMM: c,p,cb,pb. Not allowed: u
@@ -9,7 +10,6 @@ library(phytools)
 # HyperDAGs: c,p. Not allowed: b,u
 
 # Fail: including HyperDAGs output in comparative plots
-# To do: automatically plot bootstrap outcomes in comparative bubble plots
 
 # note: this is just testing for errors and plausible-looking outputs, not correct ones
 
@@ -29,6 +29,8 @@ plot_hyperinf_data(data)
 my.tree = rphylo(n, birth=1, death=1)
 df = data.frame(ID = my.tree$tip.label, as.data.frame(data))
 plot_hyperinf_data(df, my.tree)
+my.tree.2 = rphylo(n+10, birth=1, death=1)
+plot_hyperinf_data(df, my.tree.2)
 # ... cross-sectional uncertain data
 u.data = data
 u.data[sample(1:(3*n), 20)] = NA
@@ -62,11 +64,29 @@ fit.4 = hyperinf(data, method="hyperlau")
 fit.5 = hyperinf(data, method="pli")
 fit.6 = hyperinf(data, method="hyperdags")
 
-# BUG: HyperDAGs doesn't yet fit in comparative plots
+ggarrange(plot_hyperinf(fit.1), plot_hyperinf(fit.2), plot_hyperinf(fit.3),
+          plot_hyperinf(fit.4), plot_hyperinf(fit.5), plot_hyperinf(fit.6))
 
-plot_hyperinf_comparative(list(fit.1, fit.2, fit.3, fit.4, fit.5), 
+# look at feature labels in plots
+data.labels = data
+colnames(data.labels) = c("A", "B", "C")
+fit.1.labels = hyperinf(data.labels, boot.parallel = 10)
+
+ggarrange(plot_hyperinf(fit.1.labels), 
+          plot_hyperinf(fit.1.labels, feature.names = FALSE), 
+          plot_hyperinf(fit.1.labels, feature.names = c("X", "Y", "Z")))
+
+ggarrange(plot_hyperinf_bubbles(fit.1.labels), 
+          plot_hyperinf_bubbles(fit.1.labels, feature.names = FALSE), 
+          plot_hyperinf_bubbles(fit.1.labels, feature.names = c("X", "Y", "Z")))
+
+plot_hyperinf_comparative(list(fit.1, fit.2, fit.3, fit.4, fit.5, fit.6))
+                          
+plot_hyperinf_comparative(list(fit.1, fit.2, fit.3, fit.4, fit.5, fit.6), 
                           style="full", 
                           expt.names = c("HyperHMM", "HyperMk", "HyperTraPS", "HyperLAU", "PLI"))
+
+# HyperDAGs doesn't yet fit into bubble plots
 
 plot_hyperinf_bubbles(list(fit.1, fit.2, fit.3, fit.4, fit.5), 
                       p.scale = 0.2,
