@@ -20,5 +20,5 @@ Crude regularisation estimate of a HyperHMM model
 \examples{
 data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
 fit = hyperinf(data, method="hyperhmm")
-hyperhmm_regularise(fit)
+hyperinf_estimate_regularised(fit)
 }
