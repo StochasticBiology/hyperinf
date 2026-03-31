@@ -4,12 +4,12 @@
 \alias{hyperinf_loglikelihood}
 \title{Get the likelihood for a fitted hypercubic inference model}
 \usage{
-hyperinf_loglikelihood(fit, emission = TRUE, expanded = FALSE)
+hyperinf_loglikelihood(fit, emission = FALSE, expanded = FALSE)
 }
 \arguments{
 \item{fit}{A fitted hypercubic inference model (output from hyperinf)}
 
-\item{emission}{Boolean (default TRUE), whether to consider emission probabilities P(s->t)Pemit(s, t) or just P(s->t), the probability that a random walker passes through s and t}
+\item{emission}{Boolean (default FALSE), whether to consider emission probabilities P(s->t)Pemit(s, t) or just P(s->t), the probability that a random walker passes through s and t}
 
 \item{expanded}{Boolean (default FALSE) for HyperTraPS, whether to report the range of sampled likelihoods or just the max of this sample}
 }
