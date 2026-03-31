@@ -25,7 +25,18 @@ hyperinf_loglikelihood = function(fit,
   } else if("posterior.samples" %in% names(fit)) {
     fit.type = "hypertraps"
     likset = fit$lik.traces$CurrentLogLikelihood
+    paramset = fit$lik.traces$nparam
+    if(sd(paramset) > 0) {
+      message("This inference was run with penalised likelihood; parameter counts change. Be aware that this likelihood will be a penalised one!")
+    }
     loglik = fit$bestlik
+    if("initialstates" %in% names(fit$data)) {
+      diffs = rowSums(fit$data$obs) - rowSums(fit$data$initialstates)
+    } else {
+      diffs = rowSums(fit$data$obs)
+    }
+    emission.correction = sum(log(1/diffs))
+    loglik = loglik - emission.correction 
     if(expanded == FALSE) {
       message("Reporting maximum sampled likelihood")
     } else {
