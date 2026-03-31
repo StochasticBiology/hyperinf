@@ -340,6 +340,11 @@ hyperinf <- function(data,
     }
   } else if(method == "hyperlau") {
     dots <- list(...)
+    if("model" %in% names(dots)) {
+      this.model = dots[["model"]]
+    } else {
+      this.model = -1
+    }
     dots = dots[names(dots) != "independent.transitions"]
     if(!is.null(tree)) {
       if(boot.parallel > 0) {
@@ -362,6 +367,7 @@ hyperinf <- function(data,
                                   }, mc.cores = parallel::detectCores())
         this.data = list(obs = b.dests[[1]], initialstates = b.srcs[[1]])
         fit = fits[[1]]
+        fit$model = this.model
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
           tmp = fits[[i]]$Dynamics
@@ -371,6 +377,7 @@ hyperinf <- function(data,
         fit$boots = fits
       } else {
         fit = do.call(hyperlau::HyperLAU, c(list(obs = c.tree$dests, initialstates = c.tree$srcs), dots))
+        fit$model = this.model
         this.data = list(obs = c.tree$dests, initialstates = c.tree$srcs)
       }
     } else {
