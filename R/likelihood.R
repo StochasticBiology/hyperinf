@@ -155,7 +155,7 @@ hyperinf_AIC = function(fit, ...) {
 #' @examples
 #' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
 #' fit = hyperinf(data, method="hyperhmm")
-#' hyperhmm_regularise(fit)
+#' hyperinf_estimate_regularised(fit)
 #' @export
 hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
   if("best.graph" %in% names(fit)) {
