@@ -116,18 +116,15 @@ hyperinf_AIC = function(fit, ...) {
     fit$model = -1
   } else if("fitted_mk" %in% names(fit)) {
     fit.type = "mk"
-    return(fit.mk$fitted_mk$AIC)
+    return(data.frame(loglik = fit$fitted_mk$loglikelihood,
+                      nparam = (fit$fitted_mk$AIC + 2*fit$fitted_mk$loglikelihood)/2,
+                      AIC = fit$fitted_mk$AIC))
   } else {
     message("Didn't recognise this model")
     return(NULL);
   }
   loglik = hyperinf_loglikelihood(fit, ...)
-  if(fit.type == "hypertraps" & "bestparams" %in% names(fit)) {
-     nparam = fit$bestparams
-  } else if(fit.type %in% c("hyperhmm", "hypertraps", "hyperlau")) {
-    if(fit.type == "hypertraps") {
-      message("This fit used an old codebase, so I can't see the best parameterisation directly. I'll use the original model structure.")
-    }
+  if(fit.type %in% c("hyperhmm", "hypertraps", "hyperlau")) {
     if(fit$model == -1) {
       nparam = fit$L * (2**(fit$L-1))
     } else if(fit$model == 1) {
@@ -139,7 +136,80 @@ hyperinf_AIC = function(fit, ...) {
     } else if(fit$model == 4) {
       nparam = (fit$L**2)*(fit$L+1)*(fit$L+2)/6
     }
+    if(fit.type == "hypertraps" & "bestparams" %in% names(fit)) {
+      if(fit$bestparams < nparam) {
+        nparam = fit$bestparams
+      }
+    }
   }
   AIC = 2*nparam - 2*loglik
-  return(AIC)
+  return(data.frame(loglik = loglik, nparam = nparam, AIC = AIC))
+}
+
+#' Crude regularisation estimate of a HyperHMM model
+#'
+#' @param fit A fitted hypercubic inference model (output from hyperinf)
+#' @param threshold Numeric (default 1e-3), threshold of probability flux below which to remove a transition
+#'
+#' @return A list of regularised model and AIC statistics before and after "regularisation"
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' fit = hyperinf(data, method="hyperhmm")
+#' hyperhmm_regularise(fit)
+#' @export
+hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
+  if("best.graph" %in% names(fit)) {
+    fit.type = "DAG"
+  } else if("raw.graph" %in% names(fit)) {
+    fit.type = "arborescence"
+  } else if("posterior.samples" %in% names(fit)) {
+    fit.type = "hypertraps"
+  } else if("Dynamics" %in% names(fit)) {
+    fit.type = "hyperlau"
+  } else if("viz" %in% names(fit)) {
+    fit.type = "hyperhmm"
+  } else if("fitted_mk" %in% names(fit)) {
+    fit.type = "mk"
+  } else {
+    message("Didn't recognise this model")
+    return(NULL)
+  } 
+
+  pre.aic = hyperinf_AIC(fit)
+  if(fit.type == "hyperhmm") {
+    tdf = fit$transitions
+    zeroes = which(tdf$Flux < threshold)
+    fit$transitions$Flux[zeroes] = 0
+  } 
+  if(fit.type == "hyperlau") {
+    if(fit$model == -1) {
+      tdf = fit$Dynamics
+      zeroes = which(tdf$Flux < threshold)
+      fit$Dynamics$Flux[zeroes] = 0
+    } else {
+      message("Couldn't establish that this is an all-transitions-independent model!")
+      return(NULL)
+    }
+  }
+  if(fit.type == "mk") {
+    tdf = fit$mk_fluxes
+    zeroes = which(tdf$Flux < threshold*sum(tdf$Flux[tdf$From == 0]))
+    fit$mk_fluxes$Flux[zeroes] = 0
+  }
+  if(fit.type == "hypertraps") {
+    if(fit$model == -1) {
+    tdf = fit$dynamics$trans
+    zeroes = which(tdf$Flux < threshold)
+    fit$dynamics$trans$Flux[zeroes] = 0
+    } else {
+      message("Couldn't establish that this is an all-transitions-independent model!")
+      return(NULL)
+    }
+  }
+  post.aic = pre.aic
+  post.aic$nparam = post.aic$nparam - length(zeroes)
+  post.aic$AIC = post.aic$AIC - 2*length(zeroes)
+  return(list(regularised = fit,
+              pre.aic = pre.aic,
+              post.aic = post.aic))
 }
