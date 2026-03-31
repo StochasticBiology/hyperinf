@@ -399,6 +399,7 @@ hyperinf <- function(data,
                                   }, mc.cores = parallel::detectCores())
         this.data = list(obs = b.mat[[1]])
         fit = fits[[1]]
+        fit$model = this.model
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
           tmp = fits[[i]]$Dynamics
@@ -408,6 +409,7 @@ hyperinf <- function(data,
         fit$boots = fits
       } else {
         fit = do.call(hyperlau::HyperLAU, c(list(obs = mat), dots))
+        fit$model = this.model
         this.data = list(obs = mat)
       }
     }
