@@ -246,8 +246,10 @@ hyperinf <- function(data,
   if(method == "hypermk") {
     if (!is.null(tree)) {
       fit = hypermk::mk_infer_phylogenetic(mat, tree, reversible = reversible)
+      this.data = list(obs=mat, tree=tree)
     } else {
       fit = hypermk::mk_infer_cross_sectional(mat, reversible = reversible)
+      this.data = list(obs=mat)
     }
   } else if(method == "hyperhmm") {
     dots <- list(...)
@@ -276,6 +278,7 @@ hyperinf <- function(data,
                                                                        initialstates = b.srcs[[i]]),
                                                                   dots))
                                   }, mc.cores = parallel::detectCores())
+        this.data = list(obs = b.dests[[1]], initialstates = b.srcs[[1]])
         fit = fits[[1]]
         fit$transitions$p.boot = 1
         for(i in 2:length(fits)) {
@@ -286,6 +289,7 @@ hyperinf <- function(data,
         fit$boots = fits
       } else {
         fit = do.call(hyperhmm::HyperHMM, c(list(obs = dests, initialstates = srcs), dots))
+        this.data = list(obs = dests, initialstates = srcs)
       }
     } else {
       if(boot.parallel > 0) {
@@ -304,6 +308,7 @@ hyperinf <- function(data,
                                     do.call(hyperhmm::HyperHMM, c(list(obs = b.mat[[i]]), 
                                                                   dots))
                                   }, mc.cores = parallel::detectCores())
+        this.data = list(obs = b.mat[[1]])
         fit = fits[[1]]
         fit$transitions$p.boot = 1
         for(i in 2:length(fits)) {
@@ -314,6 +319,7 @@ hyperinf <- function(data,
         fit$boots = fits
       } else {
         fit = do.call(hyperhmm::HyperHMM, c(list(obs = mat), dots))
+        this.data = list(obs = mat)
       }
     }
   } else if(method == "hypertraps" | method == "pli") {
@@ -327,8 +333,10 @@ hyperinf <- function(data,
     }
     if(!is.null(tree)) {
       fit = do.call(hypertrapsct::HyperTraPS, c(list(obs = c.tree$dests, initialstates = c.tree$srcs, pli=pli), dots))
+      this.data = list(obs = c.tree$dests, initialstates = c.tree$srcs)
     } else {
       fit = do.call(hypertrapsct::HyperTraPS, c(list(obs = mat, pli=pli), dots))
+      this.data = list(obs = mat)
     }
   } else if(method == "hyperlau") {
     dots <- list(...)
@@ -352,6 +360,7 @@ hyperinf <- function(data,
                                                                        initialstates = b.srcs[[i]]),
                                                                   dots))
                                   }, mc.cores = parallel::detectCores())
+        this.data = list(obs = b.dests[[1]], initialstates = b.srcs[[1]])
         fit = fits[[1]]
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
@@ -362,6 +371,7 @@ hyperinf <- function(data,
         fit$boots = fits
       } else {
         fit = do.call(hyperlau::HyperLAU, c(list(obs = c.tree$dests, initialstates = c.tree$srcs), dots))
+        this.data = list(obs = c.tree$dests, initialstates = c.tree$srcs)
       }
     } else {
       if(boot.parallel > 0) {
@@ -380,6 +390,7 @@ hyperinf <- function(data,
                                     do.call(hyperlau::HyperLAU, c(list(obs = b.mat[[i]]), 
                                                                   dots))
                                   }, mc.cores = parallel::detectCores())
+        this.data = list(obs = b.mat[[1]])
         fit = fits[[1]]
         fit$Dynamics$p.boot = 1
         for(i in 2:length(fits)) {
@@ -390,6 +401,7 @@ hyperinf <- function(data,
         fit$boots = fits
       } else {
         fit = do.call(hyperlau::HyperLAU, c(list(obs = mat), dots))
+        this.data = list(obs = mat)
       }
     }
   }
@@ -398,15 +410,18 @@ hyperinf <- function(data,
       srcs = apply(c.tree$srcs, 1, paste0, collapse="")
       dests = apply(c.tree$dests, 1, paste0, collapse="")
       fit = hyperdags::simplest_DAG(srcs, dests)
+      this.data = list(obs = c.tree$dests, initialstates = c.tree$srcs)
     } else {
       srcs = apply(matrix(0, nrow=nrow(mat), ncol=ncol(mat)), 1, paste0, collapse="")
       dests = apply(mat, 1, paste0, collapse="")
       fit = hyperdags::simplest_DAG(srcs, dests)
+      this.data = list(obs = mat)
     }
     fit$L = ncol(mat)
   }
   fit$feature.names = feature.names
-
+  fit$data = this.data
+  
   return(fit)
 }
 
