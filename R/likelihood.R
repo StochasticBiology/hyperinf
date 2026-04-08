@@ -146,7 +146,7 @@ hyperinf_AIC = function(fit, ...) {
   return(data.frame(loglik = loglik, nparam = nparam, AIC = AIC))
 }
 
-#' Crude regularisation estimate of a HyperHMM model
+#' Crude regularisation estimate of a hypercubic inference model
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
 #' @param threshold Numeric (default 1e-3), threshold of probability flux below which to remove a transition
