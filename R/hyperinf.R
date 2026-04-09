@@ -245,10 +245,10 @@ hyperinf <- function(data,
   
   if(method == "hypermk") {
     if (!is.null(tree)) {
-      fit = hypermk::mk_infer_phylogenetic(mat, tree, reversible = reversible)
+      fit = hypermk::mk_infer_phylogenetic(mat, tree, reversible = reversible, ...)
       this.data = list(obs=mat, tree=tree)
     } else {
-      fit = hypermk::mk_infer_cross_sectional(mat, reversible = reversible)
+      fit = hypermk::mk_infer_cross_sectional(mat, reversible = reversible, ...)
       this.data = list(obs=mat)
     }
   } else if(method == "hyperhmm") {
