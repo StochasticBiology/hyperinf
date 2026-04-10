@@ -2,7 +2,7 @@
 % Please edit documentation in R/likelihood.R
 \name{hyperinf_estimate_regularised}
 \alias{hyperinf_estimate_regularised}
-\title{Crude regularisation estimate of a HyperHMM model}
+\title{Crude regularisation estimate of a hypercubic inference model}
 \usage{
 hyperinf_estimate_regularised(fit, threshold = 0.001)
 }
@@ -15,7 +15,7 @@ hyperinf_estimate_regularised(fit, threshold = 0.001)
 A list of regularised model and AIC statistics before and after "regularisation"
 }
 \description{
-Crude regularisation estimate of a HyperHMM model
+Crude regularisation estimate of a hypercubic inference model
 }
 \examples{
 data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)

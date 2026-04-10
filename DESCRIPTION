@@ -21,7 +21,8 @@ Imports:
     stringr,
     dplyr,
     tidyr,
-    parallel
+    parallel,
+    tseries
 Remotes:
     StochasticBiology/hypertrapsct,
     StochasticBiology/hyperhmm,

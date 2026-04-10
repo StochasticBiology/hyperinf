@@ -146,7 +146,7 @@ hyperinf_AIC = function(fit, ...) {
   return(data.frame(loglik = loglik, nparam = nparam, AIC = AIC))
 }
 
-#' Crude regularisation estimate of a HyperHMM model
+#' Crude regularisation estimate of a hypercubic inference model
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
 #' @param threshold Numeric (default 1e-3), threshold of probability flux below which to remove a transition
@@ -213,3 +213,64 @@ hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
               pre.aic = pre.aic,
               post.aic = post.aic))
 }
+
+#' Regularisation of a hypercubic inference model
+#'
+#' @param fit A fitted hypercubic inference model (output from hyperinf)
+#' @param threshold Numeric (default 0), threshold of probability flux below which to remove a transition
+#'
+#' @return A list of regularised model and AIC statistics before and after "regularisation"
+#' @examples
+#' data = matrix(c(0,0,1, 0,1,1, 1,1,1), ncol=3, nrow=3)
+#' fit = hyperinf(data, method="hypermk")
+#' hyperinf_regularise(fit)
+#' @export
+hyperinf_regularise = function(fit, threshold = 0) {
+  if("best.graph" %in% names(fit)) {
+    fit.type = "DAG"
+  } else if("raw.graph" %in% names(fit)) {
+    fit.type = "arborescence"
+  } else if("posterior.samples" %in% names(fit)) {
+    fit.type = "hypertraps"
+  } else if("Dynamics" %in% names(fit)) {
+    fit.type = "hyperlau"
+  } else if("viz" %in% names(fit)) {
+    fit.type = "hyperhmm"
+  } else if("fitted_mk" %in% names(fit)) {
+    fit.type = "mk"
+  } else {
+    message("Didn't recognise this model")
+    return(NULL)
+  } 
+  
+  if(!(fit.type %in% c("mk"))) {
+    if(threshold == 0) {
+      message("Can't formally regularise this type yet. Running estimated regularisation.")
+      return(hyperinf_estimate_regularised(fit))
+    } else {
+      message("Can't regularise this type yet!")
+      return(NULL)
+    }
+  }
+  pre.aic = hyperinf_AIC(fit)
+  # AIC = 2k - 2 loglik
+  nparams = (fit$fitted_mk$AIC + 2*fit$fitted_mk$loglikelihood)/2
+  if(round(nparams) <= 2*fit$L) {
+    message("Looks like this is already a first-order model!")
+    post.aic = pre.aic
+    new.fit = fit
+    
+    return(list(regularised = new.fit,
+                pre.aic = pre.aic,
+                post.aic = post.aic))
+  } 
+
+  new.fit = hypermk::mk_prune_model(fit, flux.threshold = threshold)
+  new.fit$feature.names = fit$feature.names
+  post.aic = hyperinf_AIC(new.fit)
+
+  return(list(regularised = new.fit,
+              pre.aic = pre.aic,
+              post.aic = post.aic))
+}
+
