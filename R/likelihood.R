@@ -253,6 +253,18 @@ hyperinf_regularise = function(fit, threshold = 0) {
     }
   }
   pre.aic = hyperinf_AIC(fit)
+  # AIC = 2k - 2 loglik
+  nparams = (fit$fitted_mk$AIC + 2*fit$fitted_mk$loglikelihood)/2
+  if(round(nparams) <= 2*L) {
+    message("Looks like this is already a first-order model!")
+    post.aic = pre.aic
+    new.fit = fit
+    
+    return(list(regularised = new.fit,
+                pre.aic = pre.aic,
+                post.aic = post.aic))
+  } 
+
   new.fit = hypermk::mk_prune_model(fit, flux.threshold = threshold)
   post.aic = hyperinf_AIC(new.fit)
 
