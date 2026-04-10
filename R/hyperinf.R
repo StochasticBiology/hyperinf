@@ -575,6 +575,9 @@ plot_hyperinf = function(fit,
     fluxes = tmp1[["fluxes"]]
   }
   
+  if(any(fluxes$From > fluxes$To)) {
+    reversible = TRUE
+  }
   if(reversible) {
     out.plot=  ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
       ggraph::geom_edge_arc(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label, circular = FALSE),
