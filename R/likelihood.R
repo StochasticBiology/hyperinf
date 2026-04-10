@@ -266,6 +266,7 @@ hyperinf_regularise = function(fit, threshold = 0) {
   } 
 
   new.fit = hypermk::mk_prune_model(fit, flux.threshold = threshold)
+  new.fit$feature.names = fit$feature.names
   post.aic = hyperinf_AIC(new.fit)
 
   return(list(regularised = new.fit,
