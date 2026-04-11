@@ -13,7 +13,7 @@
 #' @export
 ordering_matrix = function(fit, n.samples = 10000,
                            type = "relative") {
-  fit.type = hyperinf_fittype(fit)
+  fit.type = hyperinf_gettype(fit)
   if(is.null(fit.type)) {
     return(ggplot2::ggplot())
   } 

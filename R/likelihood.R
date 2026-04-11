@@ -145,7 +145,7 @@ hyperinf_AIC = function(fit, ...) {
 #' hyperinf_estimate_regularised(fit)
 #' @export
 hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
-  fit.type = hyperinf_fittype(fit)
+  fit.type = hyperinf_gettype(fit)
   if(is.null(fit.type)) {
     return(NULL)
   } 
@@ -201,7 +201,7 @@ hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
 #' hyperinf_regularise(fit)
 #' @export
 hyperinf_regularise = function(fit, threshold = 0) {
-  fit.type = hyperinf_fittype(fit)
+  fit.type = hyperinf_gettype(fit)
   if(is.null(fit.type)) {
     return(NULL)
   } 
