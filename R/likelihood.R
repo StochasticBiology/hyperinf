@@ -166,7 +166,7 @@ hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
       return(NULL)
     }
   }
-  if(fit.type == "mk") {
+  if(fit.type == "hypermk") {
     tdf = fit$mk_fluxes
     zeroes = which(tdf$Flux < threshold*sum(tdf$Flux[tdf$From == 0]))
     fit$mk_fluxes$Flux[zeroes] = 0
@@ -206,7 +206,7 @@ hyperinf_regularise = function(fit, threshold = 0) {
     return(NULL)
   } 
   
-  if(!(fit.type %in% c("mk"))) {
+  if(!(fit.type %in% c("hypermk"))) {
     if(threshold == 0) {
       message("Can't formally regularise this type yet. Running estimated regularisation.")
       return(hyperinf_estimate_regularised(fit))

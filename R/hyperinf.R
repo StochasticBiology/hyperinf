@@ -544,7 +544,7 @@ plot_hyperinf = function(fit,
   
   reversible = FALSE
   if(plot.type == "native") {
-    if(fit.type == "mk") {
+    if(fit.type == "hypermk") {
       out.plot = hypermk::mk.inference.plot(fit)
     } else if(fit.type == "DAG") {
       out.plot = hyperdags::plot_stage_gen(fit$best.graph, label.size = 3)

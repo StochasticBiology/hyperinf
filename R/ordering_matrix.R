@@ -17,11 +17,11 @@ ordering_matrix = function(fit, n.samples = 10000,
   if(is.null(fit.type)) {
     return(ggplot2::ggplot())
   } 
-  if(!(fit.type %in% c("hyperhmm", "hypertraps", "mk", "hyperlau"))) {
+  if(!(fit.type %in% c("hyperhmm", "hypertraps", "hypermk", "hyperlau"))) {
     message("This fit type not yet supported!")
     stop()
   }
-  if(fit.type == "mk") {
+  if(fit.type == "hypermk") {
     fit.rev = fit
     ddf = fit.rev$mk_fluxes
     count = 0

@@ -46,9 +46,9 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
   if(length(feature.names) != fit$L) {
     feature.names = as.character(1:fit$L)
   }
-  if(fit.type %in% c("mk", "hyperhmm", "hyperlau", "hypertraps")) {
+  if(fit.type %in% c("hypermk", "hyperhmm", "hyperlau", "hypertraps")) {
     # our goal is now to get a From/To/Flux dataframe and eventually a graph to plot
-    if(fit.type == "mk") {
+    if(fit.type == "hypermk") {
       fluxes = fit$mk_fluxes
       fluxes$Flux = fluxes$Flux/sum(fluxes$Flux[fluxes$From == 0])
       if(any(fluxes$From > fluxes$To)) {

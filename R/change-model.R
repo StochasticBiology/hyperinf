@@ -78,7 +78,7 @@ full_to_squared = function(fit) {
       if(fit.type %in% c("hyperlau", "hyperhmm", "hypertraps")) {
         response[[change]] = rbind(response[[change]], this.df$Probability[i])
         weights[[change]] = rbind(weights[[change]], this.df$Flux[i])
-      } else if(fit.type == "mk") {
+      } else if(fit.type == "hypermk") {
         response[[change]] = rbind(response[[change]], this.df$Rate[i])
         weights[[change]] = rbind(weights[[change]], (1+this.df$Flux[i])/max(this.df$Flux))
       }

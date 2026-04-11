@@ -13,11 +13,11 @@ hyperinf_bubbles = function(fit) {
   if(is.null(fit.type)) {
     return(ggplot2::ggplot())
   }
-  if(!(fit.type %in% c("hyperhmm", "hypertraps", "mk", "hyperlau"))) {
+  if(!(fit.type %in% c("hyperhmm", "hypertraps", "hypermk", "hyperlau"))) {
     message("This fit type not yet supported!")
     stop()
   }
-  if(fit.type == "mk") {
+  if(fit.type == "hypermk") {
     c.df = old.df = fit$mk_fluxes
     c.df = c.df[c.df$To > c.df$From,]
     c.df$change = fit$L-log(c.df$To-c.df$From, base=2)
