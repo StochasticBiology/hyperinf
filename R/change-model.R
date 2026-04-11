@@ -9,25 +9,20 @@
 #' l2params = full_to_squared(fit)
 #' @export
 full_to_squared = function(fit) {
-  if("best.graph" %in% names(fit)) {
-    fit.type = "DAG"
+  fit.type = hyperinf_gettype(fit)
+  if(fit.type == "DAG") {
     message("HyperDAGs not yet supported")
     return(NA)
-  } else if("raw.graph" %in% names(fit)) {
-    fit.type = "arborescence"
+  } else if(fit.type == "arborescence") {
     message("HyperDAGs not yet supported")
     return(NA)
-  } else if("posterior.samples" %in% names(fit)) {
-    fit.type = "hypertraps"
+  } else if(fit.type == "hypertraps") {
     df = fit$dynamics$trans
-  } else if("Dynamics" %in% names(fit)) {
-    fit.type = "hyperlau"
+  } else if(fit.type == "hyperlau") {
     df = fit$Dynamics
-  } else if("viz" %in% names(fit)) {
-    fit.type = "hyperhmm"
+  } else if(fit.type == "hyperhmm") {
     df = fit$transitions
-  } else if("fitted_mk" %in% names(fit)) {
-    fit.type = "mk"
+  } else if(fit.type == "hypermk") {
     df = fit$mk_fluxes
   } else {
     message("Didn't recognise this model")

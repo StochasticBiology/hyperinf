@@ -510,20 +510,8 @@ plot_hyperinf = function(fit,
                          threshold = 0.05,
                          uncertainty = "",
                          feature.names = TRUE) {
-  if("best.graph" %in% names(fit)) {
-    fit.type = "DAG"
-  } else if("raw.graph" %in% names(fit)) {
-    fit.type = "arborescence"
-  } else if("posterior.samples" %in% names(fit)) {
-    fit.type = "hypertraps"
-  } else if("Dynamics" %in% names(fit)) {
-    fit.type = "hyperlau"
-  } else if("viz" %in% names(fit)) {
-    fit.type = "hyperhmm"
-  } else if("fitted_mk" %in% names(fit)) {
-    fit.type = "mk"
-  } else {
-    message("Didn't recognise this model")
+  fit.type = hyperinf_gettype(fit)
+  if(is.null(fit.type)) {
     return(ggplot2::ggplot())
   }
   
@@ -743,29 +731,23 @@ plot_hyperinf_data <- function(data,
 plot_hyperinf_interactions = function(fit,
                                       threshold = 0.1,
                                       cv.threshold = 0.5) {
-  if("best.graph" %in% names(fit)) {
-    fit.type = "DAG"
+  fit.type = hyperinf_gettype(fit)
+   if(fit.type == "DAG") {
     message("HyperDAGs not supported yet")
     return(ggplot2::ggplot())
-  } else if("raw.graph" %in% names(fit)) {
-    fit.type = "arborescence"
+  } else if(fit.type == "arborescence") {
     message("HyperDAGs not supported yet")
     return(ggplot2::ggplot())
-  } else if("posterior.samples" %in% names(fit)) {
-    fit.type = "hypertraps"
+  } else if(fit.type == "hypertraps") {
     working.fit = fit
-  } else if("Dynamics" %in% names(fit)) {
-    fit.type = "hyperlau"
+  } else if(fit.type == "hyperlau") {
     working.fit = full_to_squared_fit(fit)
-  } else if("viz" %in% names(fit)) {
-    fit.type = "hyperhmm"
+  } else if(fit.type == "hyperhmm") {
     working.fit = full_to_squared_fit(fit)
-  } else if("fitted_mk" %in% names(fit)) {
-    fit.type = "mk"
+  } else if(fit.type == "hypermk") {
     working.fit = full_to_squared_fit(fit)
   } else {
-    message("Didn't recognise this model")
-    return(ggplot2::ggplot())
+     return(ggplot2::ggplot())
   }
   
   hypertrapsct::plotHypercube.influencegraph(working.fit,

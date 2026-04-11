@@ -14,16 +14,14 @@ hyperinf_loglikelihood = function(fit,
                                   emission = FALSE,
                                   expanded = FALSE) {
   L = fit$L
-  if("best.graph" %in% names(fit)) {
-    fit.type = "DAG"
+  fit.type = hyperinf_gettype(fit)
+  if(fit.type == "DAG") {
     message("DAG models don't have associated likelihoods")
     return(NULL);
-  } else if("raw.graph" %in% names(fit)) {
-    fit.type = "arborescence"
+  } else if(fit.type == "arborescence") {
     message("DAG models don't have associated likelihoods")
     return(NULL);
-  } else if("posterior.samples" %in% names(fit)) {
-    fit.type = "hypertraps"
+  } else if(fit.type == "hypertraps") {
     likset = fit$lik.traces$CurrentLogLikelihood
     paramset = fit$lik.traces$nparam
     if(sd(paramset) > 0) {
@@ -46,8 +44,7 @@ hyperinf_loglikelihood = function(fit,
     } else {
       return(likset)
     }
-  } else if("Dynamics" %in% names(fit)) {
-    fit.type = "hyperlau"
+  } else if(fit.type == "hyperlau") {
     loglik = max(fit$Likelihood$Likelihood[fit$Likelihood$Bootstrap == 0])
     if(!("data" %in% names(fit))) {
       message("This model fit wasn't run with hyperinf, so I don't have the original data. All I can give you is the original, uncorrected HyperLAU best-sampled loglik") 
@@ -55,14 +52,11 @@ hyperinf_loglikelihood = function(fit,
     }
     logPemit = nrow(fit$data$obs) * log(2/((fit$L+1)*(fit$L+2)))
     loglik = loglik - logPemit
-  } else if("viz" %in% names(fit)) {
-    fit.type = "hyperhmm"
+  } else if(fit.type == "hyperhmm") {
     loglik = fit$loglik
-  } else if("fitted_mk" %in% names(fit)) {
-    fit.type = "mk"
+  } else if(fit.type == "hypermk") {
     loglik = fit$fitted_mk$loglikelihood
   } else {
-    message("Didn't recognise this model")
     return(NULL);
   }
   if(emission == TRUE) {
@@ -95,32 +89,25 @@ hyperinf_loglikelihood = function(fit,
 #' @export
 hyperinf_AIC = function(fit, ...) {
   L = fit$L
-  if("best.graph" %in% names(fit)) {
-    fit.type = "DAG"
+  fit.type = hyperinf_gettype(fit)
+  if(fit.type == "DAG") {
     message("DAG models don't have associated likelihoods")
     return(NULL);
-  } else if("raw.graph" %in% names(fit)) {
-    fit.type = "arborescence"
+  } else if(fit.type == "arborescence") {
     message("DAG models don't have associated likelihoods")
     return(NULL);
-  } else if("posterior.samples" %in% names(fit)) {
-    fit.type = "hypertraps"
-  } else if("Dynamics" %in% names(fit)) {
-    fit.type = "hyperlau"
+  } else if(fit.type == "hyperlau") {
     if(!("model" %in% names(fit))) {
       message("This model fit wasn't run with hyperinf, so I can't be sure of the model structure. I'm assuming all-transitions-independent.")
       fit$model = -1
     }
-  } else if("viz" %in% names(fit)) {
-    fit.type = "hyperhmm"
+  } else if(fit.type == "hyperhmm") {
     fit$model = -1
-  } else if("fitted_mk" %in% names(fit)) {
-    fit.type = "mk"
+  } else if(fit.type == "hypermk") {
     return(data.frame(loglik = fit$fitted_mk$loglikelihood,
                       nparam = (fit$fitted_mk$AIC + 2*fit$fitted_mk$loglikelihood)/2,
                       AIC = fit$fitted_mk$AIC))
   } else {
-    message("Didn't recognise this model")
     return(NULL);
   }
   loglik = hyperinf_loglikelihood(fit, ...)
@@ -158,20 +145,8 @@ hyperinf_AIC = function(fit, ...) {
 #' hyperinf_estimate_regularised(fit)
 #' @export
 hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
-  if("best.graph" %in% names(fit)) {
-    fit.type = "DAG"
-  } else if("raw.graph" %in% names(fit)) {
-    fit.type = "arborescence"
-  } else if("posterior.samples" %in% names(fit)) {
-    fit.type = "hypertraps"
-  } else if("Dynamics" %in% names(fit)) {
-    fit.type = "hyperlau"
-  } else if("viz" %in% names(fit)) {
-    fit.type = "hyperhmm"
-  } else if("fitted_mk" %in% names(fit)) {
-    fit.type = "mk"
-  } else {
-    message("Didn't recognise this model")
+  fit.type = hyperinf_fittype(fit)
+  if(is.null(fit.type)) {
     return(NULL)
   } 
 
@@ -226,20 +201,8 @@ hyperinf_estimate_regularised = function(fit, threshold = 1e-3) {
 #' hyperinf_regularise(fit)
 #' @export
 hyperinf_regularise = function(fit, threshold = 0) {
-  if("best.graph" %in% names(fit)) {
-    fit.type = "DAG"
-  } else if("raw.graph" %in% names(fit)) {
-    fit.type = "arborescence"
-  } else if("posterior.samples" %in% names(fit)) {
-    fit.type = "hypertraps"
-  } else if("Dynamics" %in% names(fit)) {
-    fit.type = "hyperlau"
-  } else if("viz" %in% names(fit)) {
-    fit.type = "hyperhmm"
-  } else if("fitted_mk" %in% names(fit)) {
-    fit.type = "mk"
-  } else {
-    message("Didn't recognise this model")
+  fit.type = hyperinf_fittype(fit)
+  if(is.null(fit.type)) {
     return(NULL)
   } 
   

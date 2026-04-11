@@ -9,21 +9,8 @@
 #' hyperinf_bubbles(fit.1)
 #' @export
 hyperinf_bubbles = function(fit) {
-  this.fit = fit
-  if("best.graph" %in% names(this.fit)) {
-    fit.type = "DAG"
-  } else if("raw.graph" %in% names(this.fit)) {
-    fit.type = "arborescence"
-  } else if("posterior.samples" %in% names(this.fit)) {
-    fit.type = "hypertraps"
-  } else if("Dynamics" %in% names(this.fit)) {
-    fit.type = "hyperlau"
-  } else if("viz" %in% names(this.fit)) {
-    fit.type = "hyperhmm"
-  } else if("fitted_mk" %in% names(this.fit)) {
-    fit.type = "mk"
-  } else {
-    message("Didn't recognise this model")
+  fit.type = hyperinf_gettype(fit)
+  if(is.null(fit.type)) {
     return(ggplot2::ggplot())
   }
   if(!(fit.type %in% c("hyperhmm", "hypertraps", "mk", "hyperlau"))) {
@@ -31,10 +18,10 @@ hyperinf_bubbles = function(fit) {
     stop()
   }
   if(fit.type == "mk") {
-    c.df = old.df = this.fit$mk_fluxes
+    c.df = old.df = fit$mk_fluxes
     c.df = c.df[c.df$To > c.df$From,]
-    c.df$change = this.fit$L-log(c.df$To-c.df$From, base=2)
-    bins = sapply(c.df$From, DecToBin, len=this.fit$L)
+    c.df$change = fit$L-log(c.df$To-c.df$From, base=2)
+    bins = sapply(c.df$From, DecToBin, len=fit$L)
     c.df$level = colSums(bins)
     for(l in unique(c.df$level)) {
       l.sum = sum(c.df$Flux[c.df$level == l])
@@ -45,9 +32,9 @@ hyperinf_bubbles = function(fit) {
                     prob=c.df$Flux)
   }
   if(fit.type == "hyperlau") {
-    c.df = this.fit$Dynamics
-    c.df$change = this.fit$L-log(c.df$To-c.df$From, base=2)
-    bins = sapply(c.df$From, DecToBin, len=this.fit$L)
+    c.df = fit$Dynamics
+    c.df$change = fit$L-log(c.df$To-c.df$From, base=2)
+    bins = sapply(c.df$From, DecToBin, len=fit$L)
     c.df$level = colSums(bins)
     bp.tmp = data.frame(feature=c.df$change,
                     order=c.df$level+1,
@@ -60,13 +47,13 @@ hyperinf_bubbles = function(fit) {
     }
   }
   if(fit.type == "hyperhmm") {
-    bp = this.fit$stats
+    bp = fit$stats
     bp$prob = bp$mean
   }
   if(fit.type == "hypertraps") {
-    bp = data.frame(feature=1+this.fit$bubbles$OriginalIndex,
-                    order=1+this.fit$bubbles$Time,
-                    prob=this.fit$bubbles$Probability)
+    bp = data.frame(feature=1+fit$bubbles$OriginalIndex,
+                    order=1+fit$bubbles$Time,
+                    prob=fit$bubbles$Probability)
   }
   return(bp[,c("feature","order","prob")])
 }
@@ -222,20 +209,8 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   plot.graphs = layers = es = list()
   i = 1
   for(this.fit in fits) {
-    if("best.graph" %in% names(this.fit)) {
-      fit.type = "DAG"
-    } else if("raw.graph" %in% names(this.fit)) {
-      fit.type = "arborescence"
-    } else if("posterior.samples" %in% names(this.fit)) {
-      fit.type = "hypertraps"
-    } else if("Dynamics" %in% names(this.fit)) {
-      fit.type = "hyperlau"
-    } else if("viz" %in% names(this.fit)) {
-      fit.type = "hyperhmm"
-    } else if("fitted_mk" %in% names(this.fit)) {
-      fit.type = "mk"
-    } else {
-      message("Didn't recognise this model")
+    fit.type = hyperinf_gettype(this.fit)
+    if(is.null(fit.type)) {
       return(ggplot2::ggplot())
     }
     

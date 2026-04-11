@@ -11,27 +11,15 @@
 #' @export
 hyperinf_diagnostics = function(fit, 
                                 show.plot = TRUE) {
-  this.fit = fit
-  if("best.graph" %in% names(this.fit)) {
-    fit.type = "DAG"
-  } else if("raw.graph" %in% names(this.fit)) {
-    fit.type = "arborescence"
-  } else if("posterior.samples" %in% names(this.fit)) {
-    fit.type = "hypertraps"
-  } else if("Dynamics" %in% names(this.fit)) {
-    fit.type = "hyperlau"
-  } else if("viz" %in% names(this.fit)) {
-    fit.type = "hyperhmm"
-  } else if("fitted_mk" %in% names(this.fit)) {
-    fit.type = "mk"
-  } else {
-    message("Didn't recognise this model")
+  fit.type = hyperinf_gettype(fit)
+  if(is.null(fit.type)) {
+    return(NULL)
   }
   if(!(fit.type %in% c("hypertraps"))) {
     message("This fit type doesn't support diagnostics")
     return(NULL)
   }
-  df = this.fit$lik.traces
+  df = fit$lik.traces
   sds = apply(df[,5:7], 1, sd)
   cvs = abs(sds/rowMeans(df[,5:7]))
   kpss = tseries::kpss.test(df$CurrentLogLikelihood)

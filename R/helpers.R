@@ -2,6 +2,32 @@
 #' @export
 hyperdags::fit_properties
 
+#' Get the fitting method used to produce a hyperinf model fit
+#'
+#' @param fit A fitted hypercubic inference model (output from hyperinf)
+#' 
+#' @return A character string describing the fit type
+#' @export
+hyperinf_gettype = function(fit) {
+if("best.graph" %in% names(fit)) {
+  fit.type = "DAG"
+} else if("raw.graph" %in% names(fit)) {
+  fit.type = "arborescence"
+} else if("posterior.samples" %in% names(fit)) {
+  fit.type = "hypertraps"
+} else if("Dynamics" %in% names(fit)) {
+  fit.type = "hyperlau"
+} else if("viz" %in% names(fit)) {
+  fit.type = "hyperhmm"
+} else if("fitted_mk" %in% names(fit)) {
+  fit.type = "hypermk"
+} else {
+  message("Didn't recognise this model")
+  fit.type = NULL
+}
+return(fit.type)
+}
+
 #' Get a graph object reflecting a (plottable) transition network from a fitted model
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
