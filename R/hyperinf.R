@@ -555,6 +555,9 @@ plot_hyperinf = function(fit,
     } else if(fit.type == "hypertraps") {
       out.plot = hypertrapsct::plotHypercube.sampledgraph2(fit, node.labels = FALSE,
                                                            no.times = TRUE, edge.label.size = 3)
+    } else {
+      message("This fit type doesn't have a native plot type.")
+      out.plot = ggplot2::ggplot()
     }
   } else {
     tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold, feature.names)
@@ -571,7 +574,7 @@ plot_hyperinf = function(fit,
       ggraph::geom_edge_arc(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label, circular = FALSE),
                             strength = 0.05,
                             label_size = 3, label_colour="black", color="#AAAAFF",
-                            label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
+                            label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +
       ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
       ggraph::theme_graph(base_family="sans")
   } else if(uncertainty) {
