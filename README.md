@@ -16,6 +16,7 @@ This includes content from:
 * HyperDAGs [4] https://github.com/StochasticBiology/hyperdags
 * HyperLAU [5] https://github.com/StochasticBiology/hyperlau
 * ideas (but not code) from Cluster-HyperHMM [6]
+* HyperMk2 https://github.com/StochasticBiology/hypermk2
 
 Wrapper function `hyperinf` produces fitted hypercubic inference models from data; `plot_hyperinf` produces summary plots of the inferred transition graph. Arguments to `hyperinf` specify which fitting approach to use (default is to choose based on data structure). `full_to_squared_fit` converts a fully-parameterised hypercube (including those output from HyperHMM, HyperMK, HyperLAU) to a best estimate of an L<sup>2</sup>-parameterised HyperTraPS model (encoding pairwise interactions between features). `plot_hyperinf_comparative` and `plot_hyperinf_bubbles` produce comparative plots summarising dynamics across a list of model fits; `plot_hyperinf_bootstrap` compares bubble plots from two bootstrapped model fits. Functionality in `ordering_matrix`, `compare_orderings`, and `plot_hyperinf_compare_orderings` supports comparisons between matrices describing probabilities that feature i is acquired before j, where j is either another feature or an ordering. 
 
