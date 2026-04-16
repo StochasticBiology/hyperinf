@@ -13,29 +13,16 @@
 #' @export
 ordering_matrix = function(fit, n.samples = 10000,
                            type = "relative") {
-  this.fit = fit
-  if("best.graph" %in% names(this.fit)) {
-    fit.type = "DAG"
-  } else if("raw.graph" %in% names(this.fit)) {
-    fit.type = "arborescence"
-  } else if("posterior.samples" %in% names(this.fit)) {
-    fit.type = "hypertraps"
-  } else if("Dynamics" %in% names(this.fit)) {
-    fit.type = "hyperlau"
-  } else if("viz" %in% names(this.fit)) {
-    fit.type = "hyperhmm"
-  } else if("fitted_mk" %in% names(this.fit)) {
-    fit.type = "mk"
-  } else {
-    message("Didn't recognise this model")
+  fit.type = hyperinf_gettype(fit)
+  if(is.null(fit.type)) {
     return(ggplot2::ggplot())
-  }
-  if(!(fit.type %in% c("hyperhmm", "hypertraps", "mk", "hyperlau"))) {
+  } 
+  if(!(fit.type %in% c("hyperhmm", "hypertraps", "hypermk", "hyperlau"))) {
     message("This fit type not yet supported!")
     stop()
   }
-  if(fit.type == "mk") {
-    fit.rev = this.fit
+  if(fit.type == "hypermk") {
+    fit.rev = fit
     ddf = fit.rev$mk_fluxes
     count = 0
     m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
@@ -61,7 +48,7 @@ ordering_matrix = function(fit, n.samples = 10000,
       }
     }
   } else {
-    fit.non.rev = this.fit
+    fit.non.rev = fit
     #count
     #lvls = lvls/sum(lvls)
     
