@@ -31,7 +31,15 @@ ordering_matrix = function(fit, n.samples = 10000,
       state = 0
       for(j in 1:fit.rev$L) {
         outs = which(ddf$From == state)
-        next.trans = sample(outs, 1, prob = ddf$Rate[outs])
+        if(length(outs) == 0) {
+          state = 0
+          outs = which(ddf$From == state)
+        } 
+        if(length(outs) == 1) {
+          next.trans = outs 
+        } else {
+          next.trans = sample(outs, 1, prob = ddf$Rate[outs])
+        }
         state.v = DecToBin(state, fit.rev$L)
         ones = which(state.v==1)
         level = sum(state.v)
@@ -54,7 +62,7 @@ ordering_matrix = function(fit, n.samples = 10000,
     m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     b4m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     for(i in 1:n.samples) {
-      state = min(ddf$From)
+      state = ddf$From[sample(1:nrow(ddf), 1)]
       for(j in 1:(2*fit.rev$L)) {
         outs = which(ddf$From == state)
         if(length(outs) == 0) {
@@ -142,11 +150,15 @@ ordering_matrix = function(fit, n.samples = 10000,
     for(j in 1:ncol(b4m)) {
       if(i > j) {
         tot = b4m[i,j]+b4m[j,i]
+        if(tot > 0) {
         b4m[i,j] = b4m[i,j]/tot
         b4m[j,i] = b4m[j,i]/tot
+        }
         tot = m[i,j]+m[j,i]
+        if(tot > 0) {
         m[i,j] = m[i,j]/tot
         m[j,i] = m[j,i]/tot
+        }
       }
     }
   }
