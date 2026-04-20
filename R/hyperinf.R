@@ -209,7 +209,7 @@ hyperinf <- function(data,
       message("L > 6 will be hard and unstable for HyperMk! Consider HyperMk2. Pausing in case you want to break...")
       Sys.sleep(3)
     }
-    if(reversible == TRUE & method != "hypermk") {
+    if(reversible == TRUE & !(method %in% c("hypermk", "hypermk2"))) {
       message("Only HyperMk can deal with reversibility. I'm turning off reversibility.")
       reversible = FALSE
     }
@@ -254,7 +254,7 @@ hyperinf <- function(data,
   }
   
   if(method == "hypermk2") {
-    fit = hypermk2::hypermk2(mat, tree, ...)
+    fit = hypermk2::hypermk2(mat, tree, reversible = reversible, ...)
     this.data = list(obs=mat, tree=tree)
   }
   if(method == "hypermk") {
