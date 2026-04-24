@@ -6,7 +6,7 @@
 \usage{
 get_plot_graph(
   fit,
-  fit.type,
+  fit.type = NULL,
   uncertainty = FALSE,
   reversible = FALSE,
   threshold = 0.05,
@@ -16,7 +16,7 @@ get_plot_graph(
 \arguments{
 \item{fit}{A fitted hypercubic inference model (output from hyperinf)}
 
-\item{fit.type}{Character vector giving type of fit}
+\item{fit.type}{(default NULL) character vector giving type of fit (overridden by inferred type)}
 
 \item{uncertainty}{Boolean, are we bootstrapping}
 
