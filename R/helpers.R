@@ -35,20 +35,28 @@ hyperinf_gettype = function(fit) {
 #' Get a graph object reflecting a (plottable) transition network from a fitted model
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
-#' @param fit.type Character vector giving type of fit
+#' @param fit.type (default NULL) character vector giving type of fit (overridden by inferred type)
 #' @param uncertainty Boolean, are we bootstrapping
 #' @param reversible Boolean, are we consider reversible steps
 #' @param threshold Numeric (default 0.05), threshold to place on fluxes
 #' @param feature.names NULL or character vector (default NULL). If vector of length L, use those labels.
+#' @param max.samps Numeric (default 1000) samples for HyperTraPS sampling
 #' 
 #' @return A graph object
 #' @export
-get_plot_graph = function(fit, fit.type, uncertainty = FALSE, 
+get_plot_graph = function(fit, fit.type = NULL, uncertainty = FALSE, 
                           reversible = FALSE, threshold = 0.05,
-                          feature.names = NULL) {
+                          feature.names = NULL, max.samps = 1000) {
   fluxes = NULL
+  if(is.null(fit.type)) {
+    fit.type = hyperinf_gettype(fit)
+  }
   if(length(feature.names) != fit$L) {
-    feature.names = as.character(1:fit$L)
+    if("feature.names" %in% names(fit)) {
+      feature.names = fit$feature.names
+    } else {
+      feature.names = as.character(1:fit$L)
+    }
   }
   if(fit.type %in% c("hypermk", "hyperhmm", "hyperlau", "hypertraps")) {
     # our goal is now to get a From/To/Flux dataframe and eventually a graph to plot
@@ -106,7 +114,7 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
         fluxes = fit$dynamics$trans 
       } else {
         message("Computing fluxes...")
-        fluxes = compute_hypertraps_fluxes(fit)
+        fluxes = compute_hypertraps_fluxes(fit, max.samps = max.samps)
       }
       # decimal, 0-indexed labels
     }

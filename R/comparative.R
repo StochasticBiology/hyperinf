@@ -234,8 +234,14 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   }
   edges = dplyr::bind_rows(es)
   edges = edges[edges$Flux > threshold,]
-  if(length(feature.names) > 0) {
-    edges$label = paste("+", feature.names[edges$Change], sep="")
+  if(FALSE) {
+    if(length(feature.names) > 0) {
+    if(is.numeric(edges$Changes[1])) {
+      edges$label = paste("+", feature.names[edges$Change], sep="")    
+    } else {
+      edges$label = paste("+", edges$Change, sep="")    
+    }
+    }
   }
   
   if(style == "limited") {
