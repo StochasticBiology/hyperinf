@@ -147,6 +147,7 @@ hyperinf <- function(data,
       }
       message("More tree tips than observations... dropping those without records.")
     }
+    mat = mat[match(tree$tip.label, df$ID), ]
     if(any(mat == 2) | any(mat == -1)) {
       it = TRUE
       dots <- list(...)
@@ -173,9 +174,14 @@ hyperinf <- function(data,
   }
   
   if(method == "") {
-    if(L <= 7 & reversible == TRUE) {
-      method = "hypermk"
-      message("Selecting HyperMk...")
+    if(reversible == TRUE) {
+      if(L <= 7 | is.null(tree)) { 
+        method = "hypermk"
+        message("Selecting HyperMk...")
+      } else {
+        method = "hypermk2"
+        message("Selecting HyperMk2...")
+      }
     } else if(uncertainty == TRUE) {
       if(L <= 8) {
         method = "hyperlau"
@@ -195,11 +201,16 @@ hyperinf <- function(data,
       message("Selecting HyperDAGs...")
     }
   } else {
+    if(method == "hypermk2" & is.null(tree)) {
+      message("HyperMk2 needs a tree. Switching to HyperMk. Pausing in case you want to break...")
+      Sys.sleep(3)
+      method = "hypermk"
+    }
     if(method == "hypermk" & L > 6) {
-      message("L > 6 will be hard and unstable for HyperMk! Pausing in case you want to break...")
+      message("L > 6 will be hard and unstable for HyperMk! Consider HyperMk2. Pausing in case you want to break...")
       Sys.sleep(3)
     }
-    if(reversible == TRUE & method != "hypermk") {
+    if(reversible == TRUE & !(method %in% c("hypermk", "hypermk2"))) {
       message("Only HyperMk can deal with reversibility. I'm turning off reversibility.")
       reversible = FALSE
     }
@@ -207,7 +218,7 @@ hyperinf <- function(data,
       message("L > 18 for HyperHMM is untested and may cause memory errors. Consider HyperTraPS. Pausing in case you want to break...")
       Sys.sleep(3)
     }
-    if(!(method %in% c("hypermk", "hyperhmm", "hyperlau", "hypertraps", "hyperdags", "pli"))) {
+    if(!(method %in% c("hypermk", "hypermk2", "hyperhmm", "hyperlau", "hypertraps", "hyperdags", "pli"))) {
       message("I didn't recognise that method. Switching to HyperDAGs. Pausing in case you want to break...")
       Sys.sleep(3)
       method = "hyperdags"
@@ -243,6 +254,10 @@ hyperinf <- function(data,
     message("Warning: parallel bootstrapping only supported for HyperHMM and HyperLAU!")
   }
   
+  if(method == "hypermk2") {
+    fit = hypermk2::hypermk2(mat, tree, reversible = reversible, ...)
+    this.data = list(obs=mat, tree=tree)
+  }
   if(method == "hypermk") {
     if (!is.null(tree)) {
       fit = hypermk::mk_infer_phylogenetic(mat, tree, reversible = reversible, ...)
@@ -555,6 +570,9 @@ plot_hyperinf = function(fit,
     } else if(fit.type == "hypertraps") {
       out.plot = hypertrapsct::plotHypercube.sampledgraph2(fit, node.labels = FALSE,
                                                            no.times = TRUE, edge.label.size = 3)
+    } else {
+      message("This fit type doesn't have a native plot type.")
+      out.plot = ggplot2::ggplot()
     }
   } else {
     tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold, feature.names)
@@ -571,7 +589,7 @@ plot_hyperinf = function(fit,
       ggraph::geom_edge_arc(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label, circular = FALSE),
                             strength = 0.05,
                             label_size = 3, label_colour="black", color="#AAAAFF",
-                            label_parse = TRUE, angle_calc = "along", check_overlap = TRUE) +
+                            label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +
       ggraph::scale_edge_width(limits=c(0,NA)) + ggraph::scale_edge_alpha(limits=c(0,NA)) +
       ggraph::theme_graph(base_family="sans")
   } else if(uncertainty) {
