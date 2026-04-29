@@ -147,6 +147,7 @@ hyperinf <- function(data,
       }
       message("More tree tips than observations... dropping those without records.")
     }
+    mat = mat[match(tree$tip.label, df$ID), ]
     if(any(mat == 2) | any(mat == -1)) {
       it = TRUE
       dots <- list(...)
