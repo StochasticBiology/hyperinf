@@ -128,7 +128,7 @@ ordering_matrix = function(fit, n.samples = 10000,
           }
         }
         m = m/nrow(routes_mat)
-        return(m)
+        #return(m)
       }
       ddf = fit.non.rev$dynamics$trans
     } else if(fit.type == "hyperlau") {
