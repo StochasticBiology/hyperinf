@@ -10,7 +10,8 @@ get_plot_graph(
   uncertainty = FALSE,
   reversible = FALSE,
   threshold = 0.05,
-  feature.names = NULL
+  feature.names = NULL,
+  max.samps = 1000
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ get_plot_graph(
 \item{threshold}{Numeric (default 0.05), threshold to place on fluxes}
 
 \item{feature.names}{NULL or character vector (default NULL). If vector of length L, use those labels.}
+
+\item{max.samps}{Numeric (default 1000) samples for HyperTraPS sampling}
 }
 \value{
 A graph object

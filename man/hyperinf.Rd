@@ -43,7 +43,7 @@ Data can be flexibly supplied as a matrix or data frame, with or without an acco
 describing how observations are related
 }
 \details{
-Method can be specified: "hypermk", "hyperhmm", "hypertraps", "pli", or "hyperdags". If unspecified, the
+Method can be specified: "hypermk", "hypermk2", "hyperhmm", "hypertraps", "hyperlau", "pli", or "hyperdags". If unspecified, the
 most detailed approach compatible with the data will be chosen
 }
 \examples{
