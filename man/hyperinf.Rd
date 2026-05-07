@@ -9,7 +9,7 @@ hyperinf(
   tree = NULL,
   losses = FALSE,
   method = "",
-  reversible = FALSE,
+  reversible = NULL,
   auto.cluster = FALSE,
   auto.cluster.method = "clustering",
   boot.parallel = 0,
@@ -25,7 +25,7 @@ hyperinf(
 
 \item{method}{A character string, either empty (default) to allow automatic choice of algorithm, or one of the options in the text above}
 
-\item{reversible}{Boolean (default FALSE) whether to allow reversible transitions}
+\item{reversible}{Boolean (default TRUE for HyperMk(2), FALSE otherwise) whether to allow reversible transitions}
 
 \item{auto.cluster}{Boolean (default FALSE) whether to cluster the dataset by similarity to estimate relatedness}
 
