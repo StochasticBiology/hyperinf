@@ -80,9 +80,11 @@ ordering_matrix = function(fit, n.samples = 10000,
         nextstate = ddf$To[next.trans]
         nextstate.v = DecToBin(nextstate, fit.rev$L)
         adds = which(state.v == 0 & nextstate.v == 1)
+        if(length(adds) != 0) {
         m[level+1,adds] = m[level+1,adds]+1
         b4m[ones,adds] = b4m[ones,adds]+1
         count = count+1
+        }
         state = ddf$To[next.trans]
       }
     }
