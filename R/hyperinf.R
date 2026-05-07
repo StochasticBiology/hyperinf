@@ -74,7 +74,7 @@ clean_data = function(data) {
 #' @param tree Optional tree object
 #' @param losses Boolean (default FALSE) whether to consider losses rather than gains of features
 #' @param method A character string, either empty (default) to allow automatic choice of algorithm, or one of the options in the text above
-#' @param reversible Boolean (default FALSE) whether to allow reversible transitions
+#' @param reversible Boolean (default TRUE for HyperMk(2), FALSE otherwise) whether to allow reversible transitions
 #' @param auto.cluster Boolean (default FALSE) whether to cluster the dataset by similarity to estimate relatedness
 #' @param auto.cluster.method Character (default "clustering") method to use for clustering; see binary_phylogeny
 #' @param boot.parallel Integer (default 0) number of bootstrap resamples to run in parallel (only meaningful for HyperHMM and HyperLAU)
@@ -89,7 +89,7 @@ hyperinf <- function(data,
                      tree = NULL,
                      losses = FALSE,
                      method = "",
-                     reversible = FALSE,
+                     reversible = NULL,
                      auto.cluster = FALSE,
                      auto.cluster.method = "clustering",
                      boot.parallel = 0,
@@ -99,6 +99,11 @@ hyperinf <- function(data,
   # TO DO 
   #       -- TIMINGS
   #       -- NOT SURE UNCERTAINTY'S HANDLED RIGHT
+  
+  if(is.null(reversible)) {
+    reversible = method %in% c("hypermk", "hypermk2")
+    message("Setting reversible = ", reversible, " as default")
+  }
   
   mat = clean_data(data)
   
