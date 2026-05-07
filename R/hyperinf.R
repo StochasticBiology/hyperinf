@@ -67,7 +67,7 @@ clean_data = function(data) {
 #' Data can be flexibly supplied as a matrix or data frame, with or without an accompanying phylogeny
 #' describing how observations are related
 #'
-#' Method can be specified: "hypermk", "hyperhmm", "hypertraps", "pli", or "hyperdags". If unspecified, the
+#' Method can be specified: "hypermk", "hypermk2", "hyperhmm", "hypertraps", "hyperlau", "pli", or "hyperdags". If unspecified, the
 #' most detailed approach compatible with the data will be chosen
 #'
 #' @param data A required matrix or data.frame containing binary observations
@@ -113,9 +113,14 @@ hyperinf <- function(data,
   }
   if(is.matrix(data) & !is.null(tree)) {
     if(is.null(rownames(data))) {
-      message("You've given me a matrix without rownames and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
-      tree = NULL
-      Sys.sleep(3)
+      if(method != "hypermk2") {
+        message("You've given me a matrix without rownames and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
+        tree = NULL
+        Sys.sleep(3)
+      } else {
+        message("I'm labelling the data matrix's rows with the tree's tip labels, in order.")
+        rownames(data) = tree$tip.label
+      }
     }
   }
   if(losses == TRUE) {
@@ -147,6 +152,7 @@ hyperinf <- function(data,
       }
       message("More tree tips than observations... dropping those without records.")
     }
+    # arrange the matrix's rows in the order corresponding to the tree's tips (for HyperMk2)
     mat = mat[match(tree$tip.label, df$ID), ]
     if(any(mat == 2) | any(mat == -1)) {
       it = TRUE
