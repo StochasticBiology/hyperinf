@@ -17,7 +17,7 @@ ordering_matrix = function(fit, n.samples = 10000,
   if(is.null(fit.type)) {
     return(ggplot2::ggplot())
   } 
-  if(!(fit.type %in% c("hyperhmm", "hypertraps", "hypermk", "hyperlau"))) {
+  if(!(fit.type %in% c("hyperhmm", "hypertraps", "hypermk", "hypermk2", "hyperlau"))) {
     message("This fit type not yet supported!")
     stop()
   }
@@ -31,19 +31,58 @@ ordering_matrix = function(fit, n.samples = 10000,
       state = 0
       for(j in 1:fit.rev$L) {
         outs = which(ddf$From == state)
-        next.trans = sample(outs, 1, prob = ddf$Rate[outs])
+        if(length(outs) == 0) {
+          state = 0
+          outs = which(ddf$From == state)
+        } 
+        if(length(outs) == 1) {
+          next.trans = outs 
+        } else {
+          next.trans = sample(outs, 1, prob = ddf$Rate[outs])
+        }
         state.v = DecToBin(state, fit.rev$L)
         ones = which(state.v==1)
         level = sum(state.v)
         if(ddf$To[next.trans] > state) {
           change = fit.rev$L - log(ddf$To[next.trans]-state, base=2)
-          if(level == 5 & change == 4) {
-            cat(state.v, " ", next.trans, "\n")
-          }
+          #if(level == 5 & change == 4) {
+          #  cat(state.v, " ", next.trans, "\n")
+          #}
           m[level+1,change] = m[level+1,change]+1
           b4m[ones,change] = b4m[ones,change]+1
           count = count+1
         }
+        state = ddf$To[next.trans]
+      }
+    }
+  } else if(fit.type == "hypermk2") {
+    fit.rev = fit
+    ddf = fit.rev$mk2_fluxes
+    count = 0
+    m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    b4m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    for(i in 1:n.samples) {
+      state = ddf$From[sample(1:nrow(ddf), 1)]
+      for(j in 1:(2*fit.rev$L)) {
+        outs = which(ddf$From == state)
+        if(length(outs) == 0) {
+          state = min(ddf$From)
+          outs = which(ddf$From == state)
+        }
+        if(length(outs) == 1) {
+          next.trans = outs
+        } else {
+          next.trans = sample(outs, 1, prob = ddf$Rate[outs])
+        }
+        state.v = DecToBin(state, fit.rev$L)
+        ones = which(state.v==1)
+        level = sum(state.v)
+        nextstate = ddf$To[next.trans]
+        nextstate.v = DecToBin(nextstate, fit.rev$L)
+        adds = which(state.v == 0 & nextstate.v == 1)
+        m[level+1,adds] = m[level+1,adds]+1
+        b4m[ones,adds] = b4m[ones,adds]+1
+        count = count+1
         state = ddf$To[next.trans]
       }
     }
@@ -63,10 +102,10 @@ ordering_matrix = function(fit, n.samples = 10000,
         for(i in 1:nrow(routes_mat)) {
           for(j in 1:ncol(routes_mat)) {
             if(type == "relative") {
-              m[routes_mat[i,j]+1, 1+routes_mat[i,1:(j-1)]] = m[routes_mat[i,j]+1, 1+routes_mat[i,1:(j-1)]] + 1 
+              m[routes_mat[i,1:(j-1)]+1, routes_mat[i,j]+1] = m[routes_mat[i,1:(j-1)]+1,routes_mat[i,j]+1] + 1 
             } else {
               if(j > 1) {
-                m[routes_mat[i,j]+1, 1:(j-1)] = m[routes_mat[i,j]+1, 1:(j-1)] + 1
+                m[1:(j-1),routes_mat[i,j]+1] = m[1:(j-1),routes_mat[i,j]+1] + 1
               }
             }
           }
@@ -111,11 +150,15 @@ ordering_matrix = function(fit, n.samples = 10000,
     for(j in 1:ncol(b4m)) {
       if(i > j) {
         tot = b4m[i,j]+b4m[j,i]
+        if(tot > 0) {
         b4m[i,j] = b4m[i,j]/tot
         b4m[j,i] = b4m[j,i]/tot
+        }
         tot = m[i,j]+m[j,i]
+        if(tot > 0) {
         m[i,j] = m[i,j]/tot
         m[j,i] = m[j,i]/tot
+        }
       }
     }
   }
@@ -333,5 +376,5 @@ plot_hyperinf_ordering_matrices = function(fits,
       this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
     }
   }
-  return(this.plot)
+  return(this.plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle=45, hjust=1)))
 }

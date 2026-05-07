@@ -54,7 +54,7 @@ hyperinf_loglikelihood = function(fit,
     loglik = loglik - logPemit
   } else if(fit.type == "hyperhmm") {
     loglik = fit$loglik
-  } else if(fit.type == "hypermk") {
+  } else if(fit.type == "hypermk" | fit.type == "hypermk2") {
     loglik = fit$fitted_mk$loglikelihood
   } else {
     return(NULL);
@@ -103,7 +103,7 @@ hyperinf_AIC = function(fit, ...) {
     }
   } else if(fit.type == "hyperhmm") {
     fit$model = -1
-  } else if(fit.type == "hypermk") {
+  } else if(fit.type == "hypermk" | fit.type == "hypermk2") {
     return(data.frame(loglik = fit$fitted_mk$loglikelihood,
                       nparam = (fit$fitted_mk$AIC + 2*fit$fitted_mk$loglikelihood)/2,
                       AIC = fit$fitted_mk$AIC))

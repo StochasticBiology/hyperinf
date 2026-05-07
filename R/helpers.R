@@ -9,42 +9,54 @@ hyperdags::fit_properties
 #' @return A character string describing the fit type
 #' @export
 hyperinf_gettype = function(fit) {
-if("best.graph" %in% names(fit)) {
-  fit.type = "DAG"
-} else if("raw.graph" %in% names(fit)) {
-  fit.type = "arborescence"
-} else if("posterior.samples" %in% names(fit)) {
-  fit.type = "hypertraps"
-} else if("Dynamics" %in% names(fit)) {
-  fit.type = "hyperlau"
-} else if("viz" %in% names(fit)) {
-  fit.type = "hyperhmm"
-} else if("fitted_mk" %in% names(fit)) {
-  fit.type = "hypermk"
-} else {
-  message("Didn't recognise this model")
-  fit.type = NULL
-}
-return(fit.type)
+  if("best.graph" %in% names(fit)) {
+    fit.type = "DAG"
+  } else if("raw.graph" %in% names(fit)) {
+    fit.type = "arborescence"
+  } else if("posterior.samples" %in% names(fit)) {
+    fit.type = "hypertraps"
+  } else if("Dynamics" %in% names(fit)) {
+    fit.type = "hyperlau"
+  } else if("viz" %in% names(fit)) {
+    fit.type = "hyperhmm"
+  } else if("fitted_mk" %in% names(fit)) {
+    if("mk2_fluxes" %in% names(fit)) {
+      fit.type = "hypermk2"
+    } else {
+      fit.type = "hypermk"
+    }
+  } else {
+    message("Didn't recognise this model")
+    fit.type = NULL
+  }
+  return(fit.type)
 }
 
 #' Get a graph object reflecting a (plottable) transition network from a fitted model
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
-#' @param fit.type Character vector giving type of fit
+#' @param fit.type (default NULL) character vector giving type of fit (overridden by inferred type)
 #' @param uncertainty Boolean, are we bootstrapping
 #' @param reversible Boolean, are we consider reversible steps
 #' @param threshold Numeric (default 0.05), threshold to place on fluxes
 #' @param feature.names NULL or character vector (default NULL). If vector of length L, use those labels.
+#' @param max.samps Numeric (default 1000) samples for HyperTraPS sampling
 #' 
 #' @return A graph object
 #' @export
-get_plot_graph = function(fit, fit.type, uncertainty = FALSE, 
+get_plot_graph = function(fit, fit.type = NULL, uncertainty = FALSE, 
                           reversible = FALSE, threshold = 0.05,
-                          feature.names = NULL) {
+                          feature.names = NULL, max.samps = 1000) {
   fluxes = NULL
+  if(is.null(fit.type)) {
+    fit.type = hyperinf_gettype(fit)
+  }
   if(length(feature.names) != fit$L) {
-    feature.names = as.character(1:fit$L)
+    if("feature.names" %in% names(fit)) {
+      feature.names = fit$feature.names
+    } else {
+      feature.names = as.character(1:fit$L)
+    }
   }
   if(fit.type %in% c("hypermk", "hyperhmm", "hyperlau", "hypertraps")) {
     # our goal is now to get a From/To/Flux dataframe and eventually a graph to plot
@@ -102,7 +114,7 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
         fluxes = fit$dynamics$trans 
       } else {
         message("Computing fluxes...")
-        fluxes = compute_hypertraps_fluxes(fit)
+        fluxes = compute_hypertraps_fluxes(fit, max.samps = max.samps)
       }
       # decimal, 0-indexed labels
     }
@@ -123,7 +135,37 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
     names(layers) = states
     plot.graph = igraph::graph_from_data_frame(fluxes)
     
-  } else if(fit.type == "DAG" | fit.type == "arborescence") {
+  } else if(fit.type == "hypermk2") {
+      fluxes = fit$mk2_fluxes
+      fluxes$Flux = fluxes$Flux/max(fluxes$Flux)
+      if(any(fluxes$From > fluxes$To)) {
+        reversible = TRUE
+      }
+      fluxes = fluxes[fluxes$Flux > 0,]
+      fluxes$From.b = sapply(fluxes$From, DecToBinS, len=fit$L)
+      fluxes$To.b = sapply(fluxes$To, DecToBinS, len=fit$L)
+      fluxes$Changelabel = ""
+      
+      for(i in 1:nrow(fluxes)) {
+        src = as.numeric(strsplit(fluxes$From.b[i], "")[[1]])
+        dest = as.numeric(strsplit(fluxes$To.b[i], "")[[1]])
+        adds = which(src<dest)
+        losses = which(dest<src)
+        for(add in adds) { fluxes$Changelabel[i] = paste0(fluxes$Changelabel[i], "+", feature.names[add], ",", collapse="")  }
+        for(loss in losses) { fluxes$Changelabel[i] = paste0(fluxes$Changelabel[i], "-", feature.names[loss], ",", collapse="")  }
+        
+      }
+      fluxes$label = fluxes$Changelabel
+
+      fluxes = fluxes[fluxes$Flux > threshold,]
+      states = unique(c(fluxes$From, fluxes$To))
+      states.b = unique(c(fluxes$From.b, fluxes$To.b))
+      layers = sapply(states.b, stringr::str_count, pattern="1")
+      names(layers) = states
+      plot.graph = igraph::graph_from_data_frame(fluxes)
+      
+    }
+  else if(fit.type == "DAG" | fit.type == "arborescence") {
     if(fit.type == "arborescence") {
       graphD = fit$rewired.graph
     } else {
@@ -139,12 +181,12 @@ get_plot_graph = function(fit, fit.type, uncertainty = FALSE,
       igraph::V(graphD)$name[i] = BinToDecS(igraph::V(graphD)$name[i])
     }
     names(graphD.layers) = igraph::V(graphD)$name
-
+    
     labels = feature.names #as.character(1:L)
     graphD.size = igraph::neighborhood.size(graphD, L+1, mode="out")
     igraph::E(graphD)$Flux = as.numeric(graphD.size[igraph::ends(graphD, es = igraph::E(graphD), names = FALSE)[, 2]])
     igraph::E(graphD)$Flux = igraph::E(graphD)$Flux/max(igraph::E(graphD)$Flux)
-
+    
     for(i in 1:nrow(this.ends)) {
       igraph::E(graphD)$label[i] = paste0(paste0("+", labels[which(srcs[[i]]!=dests[[i]])]), collapse="\n")
     }

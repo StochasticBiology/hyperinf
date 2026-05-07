@@ -14,6 +14,7 @@ Imports:
     hyperhmm,
     hyperdags,
     hypermk,
+    hypermk2,
     hyperlau,
     ggplot2,
     ggraph,
@@ -28,5 +29,6 @@ Remotes:
     StochasticBiology/hyperhmm,
     StochasticBiology/hyperdags,
     StochasticBiology/hypermk,
+    StochasticBiology/hypermk2,
     StochasticBiology/hyperlau
 RoxygenNote: 7.3.2
