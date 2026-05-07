@@ -2,7 +2,7 @@
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
 #' @param n.samples Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case
-#' @param type Character string (default "relative"). Either "relative", in which case P_ij gives the probability that feature i is acquired before feature j. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.
+#' @param type Character string (default "relative"). Either "relative", in which case P_ij gives the proportion of feature i acquisitions in which feature j is already present. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.
 #' 
 #' @return A matrix giving P_ij according to the type of comparison (see above)
 #' @examples
@@ -148,14 +148,10 @@ ordering_matrix = function(fit, n.samples = 10000,
     }
   }
   
-  for(i in 1:nrow(b4m)) {
-    for(j in 1:ncol(b4m)) {
+  for(j in 1:ncol(b4m)) {
+    #b4m[,j] = b4m[,j]/sum(b4m[,j])
+    for(i in 1:nrow(b4m)) {
       if(i > j) {
-        tot = b4m[i,j]+b4m[j,i]
-        if(tot > 0) {
-        b4m[i,j] = b4m[i,j]/tot
-        b4m[j,i] = b4m[j,i]/tot
-        }
         tot = m[i,j]+m[j,i]
         if(tot > 0) {
         m[i,j] = m[i,j]/tot
@@ -365,7 +361,7 @@ plot_hyperinf_ordering_matrices = function(fits,
     #ggplot2::scale_fill_gradient2(low="blue", mid="white", high="red", midpoint=0.5) +
     ggplot2::coord_equal() +
     ggplot2::theme_minimal() + 
-    ggplot2::labs(fill = "Experiment", x = "Before", y = "After")
+    ggplot2::labs(fill = "Experiment", x = "Prior acquisition", y = "New acquisition")
   
   if(length(feature.names) != 0) {
     if(length(feature.names) == 1) {
