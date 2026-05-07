@@ -11,7 +11,7 @@ ordering_matrix(fit, n.samples = 10000, type = "relative")
 
 \item{n.samples}{Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case}
 
-\item{type}{Character string (default "relative"). Either "relative", in which case P_ij gives the probability that feature i is acquired before feature j. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.}
+\item{type}{Character string (default "relative"). Either "relative", in which case P_ij is the proportion of states encountered with i and without j. Or "transitions", in which case P_ij gives the proportion of feature i acquisitions in which feature j is already present. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.}
 }
 \value{
 A matrix giving P_ij according to the type of comparison (see above)

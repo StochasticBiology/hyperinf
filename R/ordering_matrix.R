@@ -2,7 +2,7 @@
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
 #' @param n.samples Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case
-#' @param type Character string (default "relative"). Either "relative", in which case P_ij gives the probability that feature i is acquired before feature j. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.
+#' @param type Character string (default "relative"). Either "relative", in which case P_ij is the proportion of states encountered with i and without j. Or "transitions", in which case P_ij gives the proportion of feature i acquisitions in which feature j is already present. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.
 #' 
 #' @return A matrix giving P_ij according to the type of comparison (see above)
 #' @examples
@@ -24,9 +24,9 @@ ordering_matrix = function(fit, n.samples = 10000,
   if(fit.type == "hypermk") {
     fit.rev = fit
     ddf = fit.rev$mk_fluxes
-    count = 0
+    count = count2 = 0
     m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
-    b4m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    b4m = b4m2 = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     for(i in 1:n.samples) {
       state = 0
       for(j in 1:fit.rev$L) {
@@ -42,6 +42,11 @@ ordering_matrix = function(fit, n.samples = 10000,
         }
         state.v = DecToBin(state, fit.rev$L)
         ones = which(state.v==1)
+        zeroes = which(state.v==0)
+        if(length(ones) > 0 & length(zeroes) > 0) {
+          b4m2[ones, zeroes] = b4m2[ones, zeroes] + 1
+          count2 = count2 + 1
+        }
         level = sum(state.v)
         if(ddf$To[next.trans] > state) {
           change = fit.rev$L - log(ddf$To[next.trans]-state, base=2)
@@ -55,12 +60,15 @@ ordering_matrix = function(fit, n.samples = 10000,
         state = ddf$To[next.trans]
       }
     }
+    b4m = b4m/count
+    b4m2 = b4m2/count2
   } else if(fit.type == "hypermk2") {
     fit.rev = fit
     ddf = fit.rev$mk2_fluxes
-    count = 0
+    count = count2 = 0
     m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     b4m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    b4m2 = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     for(i in 1:n.samples) {
       state = ddf$From[sample(1:nrow(ddf), 1)]
       for(j in 1:(2*fit.rev$L)) {
@@ -76,6 +84,11 @@ ordering_matrix = function(fit, n.samples = 10000,
         }
         state.v = DecToBin(state, fit.rev$L)
         ones = which(state.v==1)
+        zeroes = which(state.v==0)
+        if(length(ones) > 0 & length(zeroes) > 0) {
+          b4m2[ones, zeroes] = b4m2[ones, zeroes] + 1
+          count2 = count2 + 1
+        }
         level = sum(state.v)
         nextstate = ddf$To[next.trans]
         nextstate.v = DecToBin(nextstate, fit.rev$L)
@@ -88,6 +101,8 @@ ordering_matrix = function(fit, n.samples = 10000,
         state = ddf$To[next.trans]
       }
     }
+    b4m = b4m/count
+    b4m2 = b4m2/count2
   } else {
     fit.non.rev = fit
     #count
@@ -133,9 +148,9 @@ ordering_matrix = function(fit, n.samples = 10000,
         ddf = ddf[ddf$Bootstrap == 0,]
       }
     }
-    count = 0
+    count = count2 = 0
     m = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
-    b4m = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
+    b4m = b4m2 = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
     for(i in 1:nrow(ddf)) {
       state = ddf$From[i]
       state.v = DecToBin(state, fit.non.rev$L)
@@ -143,19 +158,21 @@ ordering_matrix = function(fit, n.samples = 10000,
       change = fit.non.rev$L - log(next.state-state, base=2)
       level = sum(state.v)
       ones = which(state.v==1)
+      zeroes = which(state.v==0)
+      if(length(ones) > 0 & length(zeroes) > 0) {
+        b4m2[ones, zeroes] = b4m2[ones, zeroes] + ddf$Flux[i]
+        count2 = count2 + ddf$Flux[i]
+      }
       m[level+1,change] = m[level+1,change]+1
       b4m[ones,change] =  b4m[ones,change] + ddf$Flux[i]
     }
+    b4m2 = b4m2 / count2
   }
   
-  for(i in 1:nrow(b4m)) {
-    for(j in 1:ncol(b4m)) {
+  for(j in 1:ncol(m)) {
+    #b4m[,j] = b4m[,j]/sum(b4m[,j])
+    for(i in 1:nrow(m)) {
       if(i > j) {
-        tot = b4m[i,j]+b4m[j,i]
-        if(tot > 0) {
-        b4m[i,j] = b4m[i,j]/tot
-        b4m[j,i] = b4m[j,i]/tot
-        }
         tot = m[i,j]+m[j,i]
         if(tot > 0) {
         m[i,j] = m[i,j]/tot
@@ -165,6 +182,8 @@ ordering_matrix = function(fit, n.samples = 10000,
     }
   }
   if(type == "relative") {
+    return(b4m2)
+  } else if(type == "transitions") {
     return(b4m)
   } else {
     return(m)
@@ -365,7 +384,7 @@ plot_hyperinf_ordering_matrices = function(fits,
     #ggplot2::scale_fill_gradient2(low="blue", mid="white", high="red", midpoint=0.5) +
     ggplot2::coord_equal() +
     ggplot2::theme_minimal() + 
-    ggplot2::labs(fill = "Experiment", x = "Before", y = "After")
+    ggplot2::labs(fill = "Experiment", x = "Prior acquisition", y = "New acquisition")
   
   if(length(feature.names) != 0) {
     if(length(feature.names) == 1) {
