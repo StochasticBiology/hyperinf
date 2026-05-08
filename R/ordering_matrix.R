@@ -94,9 +94,9 @@ ordering_matrix = function(fit, n.samples = 10000,
         nextstate.v = DecToBin(nextstate, fit.rev$L)
         adds = which(state.v == 0 & nextstate.v == 1)
         if(length(adds) != 0) {
-        m[level+1,adds] = m[level+1,adds]+1
-        b4m[ones,adds] = b4m[ones,adds]+1
-        count = count+1
+          m[level+1,adds] = m[level+1,adds]+1
+          b4m[ones,adds] = b4m[ones,adds]+1
+          count = count+1
         }
         state = ddf$To[next.trans]
       }
@@ -105,6 +105,7 @@ ordering_matrix = function(fit, n.samples = 10000,
     b4m2 = b4m2/count2
   } else {
     fit.non.rev = fit
+    process.ddf = TRUE
     #count
     #lvls = lvls/sum(lvls)
     
@@ -113,29 +114,34 @@ ordering_matrix = function(fit, n.samples = 10000,
     if(fit.type == "hyperhmm") {
       ddf = fit.non.rev$transitions
     } else if(fit.type == "hypertraps") {
-      if("routes" %in% names(fit.non.rev)) {
+      if("dynamics" %in% names(fit.non.rev)) {
+        ddf = fit.non.rev$dynamics$trans
+      } else if("routes" %in% names(fit.non.rev)) {
+        message("Processing via sampled routes")
         routes_mat = fit.non.rev$routes
         m = matrix(0, nrow = ncol(routes_mat), ncol = ncol(routes_mat))
+        b4m2 = matrix(0, nrow = ncol(routes_mat), ncol = ncol(routes_mat))
         for(i in 1:nrow(routes_mat)) {
           for(j in 1:ncol(routes_mat)) {
-            if(type == "relative") {
-              m[routes_mat[i,1:(j-1)]+1, routes_mat[i,j]+1] = m[routes_mat[i,1:(j-1)]+1,routes_mat[i,j]+1] + 1 
-            } else {
-              if(j > 1) {
-                m[1:(j-1),routes_mat[i,j]+1] = m[1:(j-1),routes_mat[i,j]+1] + 1
-              }
+            ones = routes_mat[i,1:j]+1
+            zeroes = (1:fit.non.rev$L)[-ones]
+            b4m2[ones, zeroes] = b4m2[ones, zeroes] + 1
+            if(j > 1) {
+              m[1:(j-1),routes_mat[i,j]+1] = m[1:(j-1),routes_mat[i,j]+1] + 1
             }
           }
         }
+        b4m2 = b4m2 / (ncol(routes_mat)*nrow(routes_mat))
         m = m/nrow(routes_mat)
-        #return(m)
+        if(type != "transitions") {
+          process.ddf = FALSE
+        }
       }
-      ddf = fit.non.rev$dynamics$trans
     } else if(fit.type == "hyperlau") {
       ddf = fit.non.rev$Dynamics
     }
-    if(is.null(ddf)) {
-      message("Couldn't find transitions data frame in this model!")
+    if(process.ddf == TRUE & is.null(ddf)) {
+      message("Couldn't find transitions data frame, or alternative, in this model!")
       return(NULL)
     }
     if("p.boot" %in% colnames(ddf)) {
@@ -148,35 +154,37 @@ ordering_matrix = function(fit, n.samples = 10000,
         ddf = ddf[ddf$Bootstrap == 0,]
       }
     }
-    count = count2 = 0
-    m = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
-    b4m = b4m2 = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
-    for(i in 1:nrow(ddf)) {
-      state = ddf$From[i]
-      state.v = DecToBin(state, fit.non.rev$L)
-      next.state = ddf$To[i]
-      change = fit.non.rev$L - log(next.state-state, base=2)
-      level = sum(state.v)
-      ones = which(state.v==1)
-      zeroes = which(state.v==0)
-      if(length(ones) > 0 & length(zeroes) > 0) {
-        b4m2[ones, zeroes] = b4m2[ones, zeroes] + ddf$Flux[i]
-        count2 = count2 + ddf$Flux[i]
+    if(process.ddf == TRUE) {
+      count = count2 = 0
+      m = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
+      b4m = b4m2 = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
+      for(i in 1:nrow(ddf)) {
+        state = ddf$From[i]
+        state.v = DecToBin(state, fit.non.rev$L)
+        next.state = ddf$To[i]
+        change = fit.non.rev$L - log(next.state-state, base=2)
+        level = sum(state.v)
+        ones = which(state.v==1)
+        zeroes = which(state.v==0)
+        if(length(ones) > 0 & length(zeroes) > 0) {
+          b4m2[ones, zeroes] = b4m2[ones, zeroes] + ddf$Flux[i]
+          count2 = count2 + ddf$Flux[i]
+        }
+        m[level+1,change] = m[level+1,change]+1
+        b4m[ones,change] =  b4m[ones,change] + ddf$Flux[i]
       }
-      m[level+1,change] = m[level+1,change]+1
-      b4m[ones,change] =  b4m[ones,change] + ddf$Flux[i]
+      b4m2 = b4m2 / count2
     }
-    b4m2 = b4m2 / count2
-  }
-  
-  for(j in 1:ncol(m)) {
-    #b4m[,j] = b4m[,j]/sum(b4m[,j])
-    for(i in 1:nrow(m)) {
-      if(i > j) {
-        tot = m[i,j]+m[j,i]
-        if(tot > 0) {
-        m[i,j] = m[i,j]/tot
-        m[j,i] = m[j,i]/tot
+    
+    for(j in 1:ncol(m)) {
+      #b4m[,j] = b4m[,j]/sum(b4m[,j])
+      for(i in 1:nrow(m)) {
+        if(i > j) {
+          tot = m[i,j]+m[j,i]
+          if(tot > 0) {
+            m[i,j] = m[i,j]/tot
+            m[j,i] = m[j,i]/tot
+          }
         }
       }
     }
@@ -332,21 +340,21 @@ plot_hyperinf_ordering_matrices = function(fits,
   m = list()
   df = data.frame()
   for(i in 1:length(fits)) {
-  m[[i]] = ordering_matrix(fits[[i]]) 
-  tmp = mat_to_df(m[[i]], i)
-  df = rbind(df, tmp)
+    m[[i]] = ordering_matrix(fits[[i]]) 
+    tmp = mat_to_df(m[[i]], i)
+    df = rbind(df, tmp)
   }
   
   # semicircle generator
   semicircle <- function(x, y, r, index, nindex, n) {
     
-   theta <- seq(2*pi*(index/nindex), 2*pi*((index+1)/nindex), length.out = thetastep+1)
-   tmp = data.frame(x=x,y=y) 
-   tmp = rbind(tmp, data.frame(
+    theta <- seq(2*pi*(index/nindex), 2*pi*((index+1)/nindex), length.out = thetastep+1)
+    tmp = data.frame(x=x,y=y) 
+    tmp = rbind(tmp, data.frame(
       x = x + r*cos(theta),
       y = y + r*sin(theta)
     ))
-   tmp = rbind(tmp, data.frame(x=x,y=y))
+    tmp = rbind(tmp, data.frame(x=x,y=y))
   }
   
   # build polygon data
