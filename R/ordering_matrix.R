@@ -2,7 +2,7 @@
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
 #' @param n.samples Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case
-#' @param type Character string (default "relative"). Either "relative", in which case P_ij is the proportion of states encountered with i and without j. Or "transitions", in which case P_ij gives the proportion of feature i acquisitions in which feature j is already present. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.
+#' @param type Character string (default "relative"). Either "relative", in which case P_ij is the proportion of states encountered with i and without j. Or "transitions", in which case P_ij gives the proportion of feature i acquisitions in which feature j is already present. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j (or, for Mk models, after j features are present).
 #' 
 #' @return A matrix giving P_ij according to the type of comparison (see above)
 #' @examples
@@ -53,7 +53,8 @@ ordering_matrix = function(fit, n.samples = 10000,
           #if(level == 5 & change == 4) {
           #  cat(state.v, " ", next.trans, "\n")
           #}
-          m[level+1,change] = m[level+1,change]+1
+            m[change,1:(level+1)] = m[change,1:(level+1)]+1
+        
           b4m[ones,change] = b4m[ones,change]+1
           count = count+1
         }
@@ -62,6 +63,8 @@ ordering_matrix = function(fit, n.samples = 10000,
     }
     b4m = b4m/count
     b4m2 = b4m2/count2
+    rs <- apply(m, 1, max)
+    m <- m / ifelse(rs == 0, 1, rs)
   } else if(fit.type == "hypermk2") {
     fit.rev = fit
     ddf = fit.rev$mk2_fluxes
@@ -94,7 +97,7 @@ ordering_matrix = function(fit, n.samples = 10000,
         nextstate.v = DecToBin(nextstate, fit.rev$L)
         adds = which(state.v == 0 & nextstate.v == 1)
         if(length(adds) != 0) {
-          m[level+1,adds] = m[level+1,adds]+1
+             m[adds,1:(level+1)] = m[adds,1:(level+1)]+1
           b4m[ones,adds] = b4m[ones,adds]+1
           count = count+1
         }
@@ -103,6 +106,8 @@ ordering_matrix = function(fit, n.samples = 10000,
     }
     b4m = b4m/count
     b4m2 = b4m2/count2
+    rs <- apply(m, 1, max)
+    m <- m / ifelse(rs == 0, 1, rs)
   } else {
     fit.non.rev = fit
     process.ddf = TRUE
@@ -126,13 +131,11 @@ ordering_matrix = function(fit, n.samples = 10000,
             ones = routes_mat[i,1:j]+1
             zeroes = (1:fit.non.rev$L)[-ones]
             b4m2[ones, zeroes] = b4m2[ones, zeroes] + 1
-            if(j > 1) {
-              m[1:(j-1),routes_mat[i,j]+1] = m[1:(j-1),routes_mat[i,j]+1] + 1
-            }
+                m[routes_mat[i,j]+1, 1:j] = m[routes_mat[i,j]+1,1:j] + 1
           }
         }
         b4m2 = b4m2 / (ncol(routes_mat)*nrow(routes_mat))
-        m = m/nrow(routes_mat)
+        #m = m/nrow(routes_mat)
         if(type != "transitions") {
           process.ddf = FALSE
         }
@@ -170,24 +173,15 @@ ordering_matrix = function(fit, n.samples = 10000,
           b4m2[ones, zeroes] = b4m2[ones, zeroes] + ddf$Flux[i]
           count2 = count2 + ddf$Flux[i]
         }
-        m[level+1,change] = m[level+1,change]+1
+           m[change,1:(level+1)] = m[change,1:(level+1)]+ddf$Flux[i]
         b4m[ones,change] =  b4m[ones,change] + ddf$Flux[i]
       }
       b4m2 = b4m2 / count2
     }
     
-    for(j in 1:ncol(m)) {
-      #b4m[,j] = b4m[,j]/sum(b4m[,j])
-      for(i in 1:nrow(m)) {
-        if(i > j) {
-          tot = m[i,j]+m[j,i]
-          if(tot > 0) {
-            m[i,j] = m[i,j]/tot
-            m[j,i] = m[j,i]/tot
-          }
-        }
-      }
-    }
+    rs <- apply(m, 1, max)
+    m <- m / ifelse(rs == 0, 1, rs)
+    
   }
   if(type == "relative") {
     return(b4m2)
