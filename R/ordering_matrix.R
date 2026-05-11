@@ -1,8 +1,28 @@
 #' Compute a feature ordering matrix for a hypercubic inference model fit
 #'
+#' There are several options here. 
+#' "relative" returns a matrix where P_ij is the proportion of states encountered with i and without j. 
+#' "transitions" returns a matrix where P_ij gives the proportion of feature i acquisitions in which feature j is already present. 
+#' "absolute" returns a matrix where P_ij is the probability that feature i is acquired after step j (or, for Mk models, after j features are present).
+#'
+#' There are several ways that models can differ. With "absolute", if there is a >(1-q) probability 
+#' that a feature is acquired before t in model 1, and a <q probability that a feature is acquired 
+#' before t in model 2, the dynamics differ with some threshold q.
+#' 
+#' With "relative", if there is a >(1-q) probability that feature i is acquired before feature j in
+#' model 1, and a <q probability that feature i is acquired before feature j in model 2, the dynamics
+#' differ with some threshold q.
+#' 
+#' For bootstrapped model fits, if these conditions should hold across bootstrap resamples, the difference
+#' can be described as statistically significant at a level that depends on the number of cases for which
+#' the differences are observed.
+#' 
+#' To be interesting, q should be small (q << 0.5 means genuinely different dynamics are being observed),
+#' and this should hold across all bootstraps.
+#'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
 #' @param n.samples Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case
-#' @param type Character string (default "relative"). Either "relative", in which case P_ij is the proportion of states encountered with i and without j. Or "transitions", in which case P_ij gives the proportion of feature i acquisitions in which feature j is already present. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j (or, for Mk models, after j features are present).
+#' @param type Character string (default "relative"). 
 #' 
 #' @return A matrix giving P_ij according to the type of comparison (see above)
 #' @examples
@@ -262,9 +282,15 @@ compare_orderings = function(fit.1, fit.2,
   if(threshold == 0) {
     win.1 = which((min_mat.1 > max_mat.2) , arr.ind = TRUE)
     win.2 = which((min_mat.2 > max_mat.1) , arr.ind = TRUE)
-    win.1 = data.frame(first=1, win.1)
-    win.2 = data.frame(first=2, win.2)
-    return(rbind(win.1,win.2))
+    wins = data.frame()
+    if(length(win.1) > 0) {
+      wins = rbind(wins, data.frame(first=1, win.1))
+    } 
+    if(length(win.2) > 0) {
+      wins = rbind(wins, data.frame(first=2, win.2))
+    }
+    
+    return(wins)
   } else {
     return(which((min_mat.1 > 1-threshold & max_mat.2 < threshold) 
                  | (min_mat.2 > 1-threshold & max_mat.1 < threshold), arr.ind = TRUE))
