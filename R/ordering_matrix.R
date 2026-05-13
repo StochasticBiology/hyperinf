@@ -167,17 +167,18 @@ ordering_matrix = function(fit, n.samples = 10000,
       message("Couldn't find transitions data frame, or alternative, in this model!")
       return(NULL)
     }
-    if("p.boot" %in% colnames(ddf)) {
-      message("Just looking at first resample")
-      ddf = ddf[ddf$p.boot == 1,]
-    }
-    if("Bootstrap" %in% colnames(ddf)) {
-      if(max(ddf$Bootstrap) > 0) {
-        message("Just looking at first resample")
-        ddf = ddf[ddf$Bootstrap == 0,]
-      }
-    }
+
     if(process.ddf == TRUE) {
+      if("p.boot" %in% colnames(ddf)) {
+        message("Just looking at first resample")
+        ddf = ddf[ddf$p.boot == 1,]
+      }
+      if("Bootstrap" %in% colnames(ddf)) {
+        if(max(ddf$Bootstrap) > 0) {
+          message("Just looking at first resample")
+          ddf = ddf[ddf$Bootstrap == 0,]
+        }
+      }
       count = count2 = 0
       m = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
       b4m = b4m2 = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
