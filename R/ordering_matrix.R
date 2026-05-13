@@ -236,22 +236,37 @@ multiple_fits_to_booted_fit = function(fits) {
 
 #' Compare ordering statistics from two fitted models
 #'
+#' Comparisons of ordering statistics look at two components. First (a), is there a 
+#' lack of overlap between bootstrap distributions for a given summary statistic?
+#' Second (b), is the different in magnitudes in this summary statistic large? If (a)
+#' but not (b), a precise statistic differs but the two models probably produce
+#' similar dynamics. If (b) but not (a), the two models may produce different "mean"
+#' dynamics, but there's enough noise that they overlap. If both (a) and (b), there
+#' is a precisely specified, large difference in the dynamics.
+#' 
+#' The parameter "percentile" controls (a); "threshold" controls (b).
+#'
 #' @param fit.1 A fitted hypercubic inference model including bootstrap resamples (output from hyperinf)
 #' @param fit.2 Another fitted hypercubic inference model including bootstrap resamples  (output from hyperinf)
 #' @param n.samples Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case
-#' @param threshold Numeric (default 0). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
+#' @param threshold Numeric or NULL (default 0.2). A threshold for differences. If NULL, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
+#' @param percentile Numeric (default 0). The percentile at which bootstrapped distributions should show no overlap.
 #' @param type Character string (default "relative"). Either "relative", in which case P_ij gives the probability that feature i is acquired before feature j. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.
 #' 
 #' @return A hypercubic inference model structure with the model fits stored as "bootstrap resamples"
 #' @export
 compare_orderings = function(fit.1, fit.2, 
                              n.samples = 10000, 
-                             threshold = 0,
+                             threshold = 0.2,
+                             percentile = 0,
                              type = "relative") {
   oms.1 = oms.2 = list()
   if(!("boots" %in% names(fit.1) & "boots" %in% names(fit.2))) {
     message("Didn't find bootstrap resamples in these fits")
     return(NULL)
+  }
+  if(is.null(threshold)) {
+    message("Warning: comparing distributions without considering probabilities may not give a scientifically interesting result.")
   }
   message("Computing orderings 1")
   for(i in 1:length(fit.1$boots)) {
@@ -272,14 +287,14 @@ compare_orderings = function(fit.1, fit.2,
   # Stack into array
   arr.1 <- simplify2array(oms.1)
   arr.2 <- simplify2array(oms.2)
+
+  # pull percentiles across bootstraps (3rd dimension)
+  min_mat.1 <- apply(arr.1, c(1, 2), quantile, probs=percentile) 
+  max_mat.1 <- apply(arr.1, c(1, 2), quantile, probs=1-percentile) 
+  min_mat.2 <- apply(arr.2, c(1, 2), quantile, probs=percentile) 
+  max_mat.2 <- apply(arr.2, c(1, 2), quantile, probs=1-percentile) 
   
-  # Min/max across 3rd dimension (list index)
-  min_mat.1 <- apply(arr.1, c(1, 2), min)
-  max_mat.1 <- apply(arr.1, c(1, 2), max)
-  min_mat.2 <- apply(arr.2, c(1, 2), min)
-  max_mat.2 <- apply(arr.2, c(1, 2), max)
-  
-  if(threshold == 0) {
+  if(is.null(threshold)) {
     win.1 = which((min_mat.1 > max_mat.2) , arr.ind = TRUE)
     win.2 = which((min_mat.2 > max_mat.1) , arr.ind = TRUE)
     wins = data.frame()
@@ -299,18 +314,26 @@ compare_orderings = function(fit.1, fit.2,
 
 #' Plot comparative ordering statistics from two fitted models
 #'
+#' See "compare_orderings" for a description of the "threshold" and "percentile"
+#' parameters, which broadly control the size and the "significance" of reported
+#' differences.
+#'
 #' @param fit.1 A fitted hypercubic inference model including bootstrap resamples (output from hyperinf)
 #' @param fit.2 Another fitted hypercubic inference model including bootstrap resamples  (output from hyperinf)
-#' @param threshold Numeric (default 0). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
+#' @param threshold Numeric or NULL (default 0.2). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
+#' @param percentile Numeric (default 0). The percentile at which bootstrapped distributions should show no overlap.
 #' @param ... additional parameters to pass to plot_hyperinf_bubbles
 #' 
 #' @return A ggplot object displaying pairs of features and timings for which separation is detected
 #' @export
-plot_hyperinf_compare_orderings = function(fit.1, fit.2, threshold=0.2, ...) {
-  om.r = compare_orderings(fit.1, fit.2, threshold=threshold)
-  om = compare_orderings(fit.1, fit.2, type="absolute", threshold=threshold)
+plot_hyperinf_compare_orderings = function(fit.1, fit.2, 
+                                           threshold=0.2, 
+                                           percentile=0,
+                                           ...) {
+  om.r = compare_orderings(fit.1, fit.2, threshold=threshold, percentile=percentile)
+  om = compare_orderings(fit.1, fit.2, type="absolute", threshold=threshold, percentile=percentile)
   om.df = as.data.frame(om)
-  om.r = om.r[om.r[,1] < om.r[,2],]
+  om.r = om.r[om.r[,1] < om.r[,2], , drop=FALSE]
   if(nrow(om.r) >= 1) {
     om.r.df = data.frame(id=1:nrow(om.r), as.data.frame(om.r))
   } else {
