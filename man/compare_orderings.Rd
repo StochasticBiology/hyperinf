@@ -8,7 +8,8 @@ compare_orderings(
   fit.1,
   fit.2,
   n.samples = 10000,
-  threshold = 0,
+  threshold = 0.2,
+  percentile = 0,
   type = "relative"
 )
 }
@@ -19,7 +20,9 @@ compare_orderings(
 
 \item{n.samples}{Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case}
 
-\item{threshold}{Numeric (default 0). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold.}
+\item{threshold}{Numeric or NULL (default 0.2). A threshold for differences. If NULL, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold.}
+
+\item{percentile}{Numeric (default 0). The percentile at which bootstrapped distributions should show no overlap.}
 
 \item{type}{Character string (default "relative"). Either "relative", in which case P_ij gives the probability that feature i is acquired before feature j. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.}
 }
@@ -27,5 +30,14 @@ compare_orderings(
 A hypercubic inference model structure with the model fits stored as "bootstrap resamples"
 }
 \description{
-Compare ordering statistics from two fitted models
+Comparisons of ordering statistics look at two components. First (a), is there a 
+lack of overlap between bootstrap distributions for a given summary statistic?
+Second (b), is the different in magnitudes in this summary statistic large? If (a)
+but not (b), a precise statistic differs but the two models probably produce
+similar dynamics. If (b) but not (a), the two models may produce different "mean"
+dynamics, but there's enough noise that they overlap. If both (a) and (b), there
+is a precisely specified, large difference in the dynamics.
+}
+\details{
+The parameter "percentile" controls (a); "threshold" controls (b).
 }
