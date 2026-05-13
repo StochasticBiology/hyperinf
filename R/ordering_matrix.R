@@ -41,6 +41,7 @@ ordering_matrix = function(fit, n.samples = 10000,
     message("This fit type not yet supported!")
     stop()
   }
+  ddf = NULL
   if(fit.type == "hypermk") {
     fit.rev = fit
     ddf = fit.rev$mk_fluxes
