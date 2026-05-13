@@ -7,8 +7,8 @@
 plot_hyperinf_compare_orderings(
   fit.1,
   fit.2,
-  threshold = 0.2,
-  percentile = 0,
+  threshold = 0.25,
+  percentile = 0.2,
   ...
 )
 }
@@ -17,9 +17,9 @@ plot_hyperinf_compare_orderings(
 
 \item{fit.2}{Another fitted hypercubic inference model including bootstrap resamples  (output from hyperinf)}
 
-\item{threshold}{Numeric or NULL (default 0.2). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold.}
+\item{threshold}{Numeric or NULL (default 0.25). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold.}
 
-\item{percentile}{Numeric (default 0). The percentile at which bootstrapped distributions should show no overlap.}
+\item{percentile}{Numeric (default 0.2). The percentile at which bootstrapped distributions should show no overlap.}
 
 \item{...}{additional parameters to pass to plot_hyperinf_bubbles}
 }

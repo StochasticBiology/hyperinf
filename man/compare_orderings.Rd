@@ -8,8 +8,8 @@ compare_orderings(
   fit.1,
   fit.2,
   n.samples = 10000,
-  threshold = 0.2,
-  percentile = 0,
+  threshold = 0.25,
+  percentile = 0.2,
   type = "relative"
 )
 }
@@ -20,9 +20,9 @@ compare_orderings(
 
 \item{n.samples}{Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case}
 
-\item{threshold}{Numeric or NULL (default 0.2). A threshold for differences. If NULL, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold.}
+\item{threshold}{Numeric or NULL (default 0.25). A threshold for differences. If NULL, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold.}
 
-\item{percentile}{Numeric (default 0). The percentile at which bootstrapped distributions should show no overlap.}
+\item{percentile}{Numeric (default 0.2). The percentile at which bootstrapped distributions should show no overlap.}
 
 \item{type}{Character string (default "relative"). Either "relative", in which case P_ij gives the probability that feature i is acquired before feature j. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.}
 }
