@@ -2,6 +2,55 @@
 #' @export
 hyperdags::fit_properties
 
+#' Parameteric bootstrap for a HyperMk model fit
+#'
+#' @param fit A fitted HyperMk model (output from hyperinf)
+#' @param n_boot Numeric (default 10) number of bootstrap resamples to run
+#' @param reversible Boolean (default TRUE) whether we're running a reversible HyperMk model
+#' @param flux.samples Numeric (default 10000) number of samplers to run to characterise dynamics
+#' 
+#' @return The original fitted model with a new element boots, containing transition matrices and dynamic summaries across bootstraps
+#' @export
+bootstrap_mk_fit = function(fit, 
+                            n_boot = 10,
+                            reversible = TRUE,
+                            flux.samples = 10000) {
+  if(hyperinf_gettype(fit) != "hypermk") {
+    message("This only works for HyperMk")
+    return(NULL)
+  }
+  Q_hat <- fit$fitted_mk$transition_matrix
+  
+  fit$boots = list()
+  reversible = TRUE
+  L = fit$L
+  
+  for(i in 1:n_boot){
+    
+    # simulate new tip states under fitted model
+    sim_states <- castor::simulate_mk_model(
+      tree        = fit$data$tree,
+      Q = Q_hat,
+    )
+    
+    # refit
+    if(FALSE) {
+    fit_i <- castor::fit_mk(fit$data$tree, 2^L, tip_states = sim_states$tip_states,
+                            rate_model = hypermk::mk_index_matrix(L, reversible=reversible))
+    
+    message("simulating fluxes")
+    fit$boots[[i]] = list(Q_boot = fit_i$transition_matrix,
+                          mk_df = hypermk::mk_pull_transitions(fit_i, reversible = reversible),
+                          mk_fluxes = hypermk::mk_simulate_fluxes(fit_i, L, reversible = reversible,
+                                                                  nwalker = flux.samples)
+    )
+    }
+    fit$boots[[i]] = hypermk::mk.inference(fit$data$tree, L, use.priors=FALSE, sim_states$tip_states, reversible=reversible)
+  }
+  
+  return(fit)
+}
+
 #' Get the fitting method used to produce a hyperinf model fit
 #'
 #' @param fit A fitted hypercubic inference model (output from hyperinf)
