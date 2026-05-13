@@ -249,16 +249,16 @@ multiple_fits_to_booted_fit = function(fits) {
 #' @param fit.1 A fitted hypercubic inference model including bootstrap resamples (output from hyperinf)
 #' @param fit.2 Another fitted hypercubic inference model including bootstrap resamples  (output from hyperinf)
 #' @param n.samples Integer (default 10k) number of samples to characterise dynamics in the reversible (HyperMk) case
-#' @param threshold Numeric or NULL (default 0.2). A threshold for differences. If NULL, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
-#' @param percentile Numeric (default 0). The percentile at which bootstrapped distributions should show no overlap.
+#' @param threshold Numeric or NULL (default 0.25). A threshold for differences. If NULL, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
+#' @param percentile Numeric (default 0.2). The percentile at which bootstrapped distributions should show no overlap.
 #' @param type Character string (default "relative"). Either "relative", in which case P_ij gives the probability that feature i is acquired before feature j. Or "absolute", in which case P_ij is the probability that feature i is acquired after step j.
 #' 
 #' @return A hypercubic inference model structure with the model fits stored as "bootstrap resamples"
 #' @export
 compare_orderings = function(fit.1, fit.2, 
                              n.samples = 10000, 
-                             threshold = 0.2,
-                             percentile = 0,
+                             threshold = 0.25,
+                             percentile = 0.2,
                              type = "relative") {
   oms.1 = oms.2 = list()
   if(!("boots" %in% names(fit.1) & "boots" %in% names(fit.2))) {
@@ -320,15 +320,15 @@ compare_orderings = function(fit.1, fit.2,
 #'
 #' @param fit.1 A fitted hypercubic inference model including bootstrap resamples (output from hyperinf)
 #' @param fit.2 Another fitted hypercubic inference model including bootstrap resamples  (output from hyperinf)
-#' @param threshold Numeric or NULL (default 0.2). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
-#' @param percentile Numeric (default 0). The percentile at which bootstrapped distributions should show no overlap.
+#' @param threshold Numeric or NULL (default 0.25). A threshold for differences. If zero, any separation of statistic (e.g. non-overlapping bootstrap distributions) is reported. If nonzero, we require one fit's statistic > 1-threshold and the other fit's statistic < threshold. 
+#' @param percentile Numeric (default 0.2). The percentile at which bootstrapped distributions should show no overlap.
 #' @param ... additional parameters to pass to plot_hyperinf_bubbles
 #' 
 #' @return A ggplot object displaying pairs of features and timings for which separation is detected
 #' @export
 plot_hyperinf_compare_orderings = function(fit.1, fit.2, 
-                                           threshold=0.2, 
-                                           percentile=0,
+                                           threshold=0.25, 
+                                           percentile=0.2,
                                            ...) {
   om.r = compare_orderings(fit.1, fit.2, threshold=threshold, percentile=percentile)
   om = compare_orderings(fit.1, fit.2, type="absolute", threshold=threshold, percentile=percentile)
