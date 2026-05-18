@@ -6,6 +6,7 @@
 \usage{
 plot_hyperinf_ordering_matrices(
   fits,
+  type = "absolute",
   expt.names = NULL,
   feature.names = TRUE,
   thetastep = 5,
@@ -15,6 +16,8 @@ plot_hyperinf_ordering_matrices(
 }
 \arguments{
 \item{fits}{A list of fitted hypercubic inference models (or single model)}
+
+\item{type}{Character string (default "absolute"): which type of ordering matrix to plot ("absolute", "relative"; see ordering_matrix)}
 
 \item{expt.names}{Optional vector of labels for each element of the fit list}
 

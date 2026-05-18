@@ -18,9 +18,9 @@ A matrix giving P_ij according to the type of comparison (see above)
 }
 \description{
 There are several options here. 
-"relative" returns a matrix where P_ij is the proportion of states encountered with i and without j. 
+"relative" returns a matrix where P_ij is the proportion of *precursor states* encountered with i and without j. 
 "transitions" returns a matrix where P_ij gives the proportion of feature i acquisitions in which feature j is already present. 
-"absolute" returns a matrix where P_ij is the probability that feature i is acquired after step j (or, for Mk models, after j features are present).
+"absolute" returns a matrix where P_ij is the probability, across *precursor states*, that feature i is acquired after step j (or, for Mk models, after j features are present).
 }
 \details{
 There are several ways that models can differ. With "absolute", if there is a >(1-q) probability 
