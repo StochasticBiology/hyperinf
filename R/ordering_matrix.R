@@ -3,7 +3,7 @@
 #' There are several options here. 
 #' "relative" returns a matrix where P_ij is the proportion of *precursor states* encountered with i and without j. 
 #' "transitions" returns a matrix where P_ij gives the proportion of feature i acquisitions in which feature j is already present. 
-#' "absolute" returns a matrix where P_ij is the probability, across *precursor states*, that feature i is acquired after step j (or, for Mk models, after j features are present).
+#' "absolute" returns a matrix where P_ij is the probability, across *precursor states*, that feature i is acquired after at least j features are present.
 #'
 #' There are several ways that models can differ. With "absolute", if there is a >(1-q) probability 
 #' that a feature is acquired before t in model 1, and a <q probability that a feature is acquired 
@@ -378,8 +378,8 @@ plot_hyperinf_ordering_matrices = function(fits,
   # convert matrix to dataframe
   mat_to_df <- function(mat, type) {
     expand.grid(
-      x = seq_len(ncol(mat)),
-      y = seq_len(nrow(mat))
+      x = seq_len(nrow(mat)),
+      y = seq_len(ncol(mat))
     ) |>
       transform(
         value = as.vector(mat),
@@ -391,6 +391,9 @@ plot_hyperinf_ordering_matrices = function(fits,
   df = data.frame()
   for(i in 1:length(fits)) {
     m[[i]] = ordering_matrix(fits[[i]], type=type) 
+    if(type == "absolute") {
+      m[[i]] = t(m[[i]])
+    }
     tmp = mat_to_df(m[[i]], i)
     df = rbind(df, tmp)
   }
