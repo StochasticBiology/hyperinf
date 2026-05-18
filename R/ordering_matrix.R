@@ -1,9 +1,9 @@
 #' Compute a feature ordering matrix for a hypercubic inference model fit
 #'
 #' There are several options here. 
-#' "relative" returns a matrix where P_ij is the proportion of states encountered with i and without j. 
+#' "relative" returns a matrix where P_ij is the proportion of *precursor states* encountered with i and without j. 
 #' "transitions" returns a matrix where P_ij gives the proportion of feature i acquisitions in which feature j is already present. 
-#' "absolute" returns a matrix where P_ij is the probability that feature i is acquired after step j (or, for Mk models, after j features are present).
+#' "absolute" returns a matrix where P_ij is the probability, across *precursor states*, that feature i is acquired after step j (or, for Mk models, after j features are present).
 #'
 #' There are several ways that models can differ. With "absolute", if there is a >(1-q) probability 
 #' that a feature is acquired before t in model 1, and a <q probability that a feature is acquired 
@@ -352,6 +352,7 @@ plot_hyperinf_compare_orderings = function(fit.1, fit.2,
 #' Plot ordering matrices from fitted models
 #'
 #' @param fits A list of fitted hypercubic inference models (or single model)
+#' @param type Character string (default "absolute"): which type of ordering matrix to plot ("absolute", "relative"; see ordering_matrix)
 #' @param expt.names Optional vector of labels for each element of the fit list
 #' @param feature.names Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.
 #' @param thetastep Integer (default 5), the number of angular steps to take when drawing polygons for each bubble segment. Lower this for many comparisons.
@@ -361,6 +362,7 @@ plot_hyperinf_compare_orderings = function(fit.1, fit.2,
 #' @return A ggplot object comparing ordering matrices
 #' @export
 plot_hyperinf_ordering_matrices = function(fits,
+                                           type = "absolute",
                                            expt.names = NULL,
                                            feature.names = TRUE,
                                            thetastep = 5,
@@ -369,7 +371,10 @@ plot_hyperinf_ordering_matrices = function(fits,
   if("L" %in% names(fits)) {
     fits = list(fits)
   }
-  
+  if(!(type %in% c("absolute", "relative"))) {
+    message("Only absolute and relative types supported")
+    return(ggplot2::ggplot())
+  }
   # convert matrix to dataframe
   mat_to_df <- function(mat, type) {
     expand.grid(
@@ -385,7 +390,7 @@ plot_hyperinf_ordering_matrices = function(fits,
   m = list()
   df = data.frame()
   for(i in 1:length(fits)) {
-    m[[i]] = ordering_matrix(fits[[i]]) 
+    m[[i]] = ordering_matrix(fits[[i]], type=type) 
     tmp = mat_to_df(m[[i]], i)
     df = rbind(df, tmp)
   }
@@ -430,25 +435,52 @@ plot_hyperinf_ordering_matrices = function(fits,
   })
   
   poly_df <- do.call(rbind, poly_list)
+  if(type == "absolute") {
+    poly_df$x = poly_df$x - 1
+  }
   
   # plot
   this.plot = ggplot2::ggplot(poly_df, ggplot2::aes(x, y, group=id, fill=factor(type))) +
     ggplot2::geom_polygon() +
     #ggplot2::scale_fill_gradient2(low="blue", mid="white", high="red", midpoint=0.5) +
     ggplot2::coord_equal() +
-    ggplot2::theme_minimal() + 
-    ggplot2::labs(fill = "Experiment", x = "Prior acquisition", y = "New acquisition")
+    ggplot2::theme_minimal() 
   
+  if(type == "relative") {
+    this.plot = this.plot + ggplot2::labs(fill = "Experiment", x = "Feature present", y = "Feature absent")
+  } else {
+    this.plot = this.plot + ggplot2::labs(fill = "Experiment", x = "At least n prior acquisitions?", y = "New acquisition")
+  }
+  
+  yset = xset = FALSE
   if(length(feature.names) != 0) {
     if(length(feature.names) == 1) {
-      if(feature.names == TRUE) {
+      if(feature.names == TRUE & !is.null(fits[[1]]$feature.names)) {
         this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
-        this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
+        yset = TRUE
+        if(type == "relative") {
+          this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L, labels = fits[[1]]$feature.names)
+          xset = TRUE
+        }
       }
     } else if(length(feature.names) == fits[[1]]$L) {
       this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
-      this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
+      yset = TRUE
+      if(type == "relative") {
+        this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L, labels = feature.names)
+        xset = TRUE
+      }
     }
+  }
+  if(xset == FALSE) {
+    if(type == "relative") {
+      this.plot = this.plot + ggplot2::scale_x_continuous(breaks=1:fits[[1]]$L)
+    } else {
+      this.plot = this.plot + ggplot2::scale_x_continuous(breaks=0:(fits[[1]]$L-1))
+    }
+  }
+  if(yset == FALSE) {
+    this.plot = this.plot + ggplot2::scale_y_continuous(breaks=1:fits[[1]]$L)
   }
   return(this.plot + ggplot2::theme(axis.text.x = ggplot2::element_text(angle=45, hjust=1)))
 }
