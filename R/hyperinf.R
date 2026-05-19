@@ -595,8 +595,16 @@ plot_hyperinf = function(fit,
   if(any(fluxes$From > fluxes$To)) {
     reversible = TRUE
   }
+  
+  layout <- igraph::layout_with_sugiyama(
+    plot.graph,
+    layers = layers[igraph::V(plot.graph)$name]   # THIS is the key
+  )
+  
+  coords <- layout$layout
+  
   if(reversible) {
-    out.plot=  ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+    out.plot=  ggraph::ggraph(plot.graph, layout = "manual", x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_arc(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label, circular = FALSE),
                             strength = 0.05,
                             label_size = 3, label_colour="black", color="#AAAAFF",
@@ -607,7 +615,7 @@ plot_hyperinf = function(fit,
     library(ggraph)
     cvs = fluxes$FluxSD/fluxes$Flux
     maxcv = max( max(cvs), 0.5 )
-    out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+    out.plot = ggraph::ggraph(plot.graph, layout = "manual", x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_color=FluxSD/Flux, label=label),
                              label_size = 3, label_colour="black",
                              label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +
@@ -615,7 +623,7 @@ plot_hyperinf = function(fit,
       ggraph::scale_edge_color_gradient(name = "CV", low = "#AAAAFF", high = "#FFAAAA", na.value = "lightgrey", limits=c(0,maxcv)) +
       ggraph::theme_graph(base_family="sans")
   } else {
-    out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+    out.plot = ggraph::ggraph(plot.graph, layout = "manual", x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label),
                              label_size = 3, label_colour="black", color="#AAAAFF",
                              label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +

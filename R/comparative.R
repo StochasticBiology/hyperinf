@@ -274,8 +274,15 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   # Ensure src is a factor
   igraph::E(g_combined)$Experiment <- factor(igraph::E(g_combined)$src)
   
+  layout <- igraph::layout_with_sugiyama(
+    g_combined,
+    layers = use.layers[igraph::V(g_combined)$name]   # THIS is the key
+  )
+  
+  coords <- layout$layout
+  
   if(style == "limited") {
-  g.plot = ggraph::ggraph(g_combined, layout = "sugiyama") +
+  g.plot = ggraph::ggraph(g_combined, layout = "manual", x = coords[,1], y = coords[,2]) +
     ggraph::geom_edge_fan(ggplot2::aes(
       edge_width = mean,
       edge_alpha = nboot,
@@ -288,7 +295,7 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
     ggraph::scale_edge_alpha(range = c(0, 0.4)) +
     ggraph::theme_graph(base_family = "sans") 
   } else {
-    g.plot = ggraph::ggraph(g_combined, layout = "sugiyama") +
+    g.plot = ggraph::ggraph(g_combined, layout = "manual", x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_fan(ggplot2::aes(
         edge_width = Flux,
         edge_alpha = Flux,
