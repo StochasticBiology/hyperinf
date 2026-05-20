@@ -191,6 +191,7 @@ plot_hyperinf_bubbles = function(fits,
 #' @param style Character (default "limited") giving plot style. "limited" condenses bootstrap resamples into single edges; others plot each as a different arc.
 #' @param bend Numeric (default 0.5) the strength of the bend separating edges between the same pair of nodes
 #' @param label_size Numeric (default 2) the size of edge labels
+#' @param clip Numeric or NULL (default NULL). The "level" of the hypercube below which transitions should not be plotted. Use to focus only on early transitions.
 #'
 #' @return A ggplot object
 #' @examples
@@ -204,7 +205,8 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
                                      feature.names=TRUE,
                                      style="limited",
                                      bend = 0.5,
-                                     label_size = 2) {
+                                     label_size = 2,
+                                     clip = NULL) {
   library(ggraph)
   plot.graphs = layers = es = list()
   i = 1
@@ -273,6 +275,11 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   
   # Ensure src is a factor
   igraph::E(g_combined)$Experiment <- factor(igraph::E(g_combined)$src)
+  
+  if(!is.null(clip)) {
+    g_combined <- g_combined - igraph::V(g_combined)[use.layers[name] > clip]
+    use.layers = use.layers[use.layers <= clip]
+  }
   
   layout <- igraph::layout_with_sugiyama(
     g_combined,

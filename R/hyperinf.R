@@ -524,6 +524,7 @@ compute_hypertraps_fluxes = function(my.post,
 #' @param threshold Double (default 0.05), probability flux below which edges will not be plotted
 #' @param uncertainty Boolean, whether to visualise uncertainty over bootstraps (only for HyperLAU and HyperHMM)
 #' @param feature.names Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.
+#' @param clip Numeric or NULL (default NULL). The "level" of the hypercube below which transitions should not be plotted. Use to focus only on early transitions.
 #'
 #' @return A ggplot object
 #' @examples
@@ -535,7 +536,8 @@ plot_hyperinf = function(fit,
                          plot.type = "",
                          threshold = 0.05,
                          uncertainty = "",
-                         feature.names = TRUE) {
+                         feature.names = TRUE,
+                         clip = NULL) {
   fit.type = hyperinf_gettype(fit)
   if(is.null(fit.type)) {
     return(ggplot2::ggplot())
@@ -586,7 +588,7 @@ plot_hyperinf = function(fit,
       out.plot = ggplot2::ggplot()
     }
   } else {
-    tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold, feature.names)
+    tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold, feature.names, clip)
     plot.graph = tmp1[["plot.graph"]]
     layers = tmp1[["layers"]]
     fluxes = tmp1[["fluxes"]]
@@ -596,9 +598,14 @@ plot_hyperinf = function(fit,
     reversible = TRUE
   }
   
+  if(!is.null(clip)) {
+    plot.graph <- plot.graph - igraph::V(plot.graph)[layers[name] > clip]
+    layers = layers[layers <= clip]
+  }
+  
   layout <- igraph::layout_with_sugiyama(
     plot.graph,
-    layers = layers[igraph::V(plot.graph)$name]   # THIS is the key
+    layers = layers[igraph::V(plot.graph)$name]   
   )
   
   coords <- layout$layout
