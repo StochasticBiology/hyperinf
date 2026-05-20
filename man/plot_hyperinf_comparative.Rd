@@ -11,7 +11,8 @@ plot_hyperinf_comparative(
   feature.names = TRUE,
   style = "limited",
   bend = 0.5,
-  label_size = 2
+  label_size = 2,
+  clip = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ plot_hyperinf_comparative(
 \item{bend}{Numeric (default 0.5) the strength of the bend separating edges between the same pair of nodes}
 
 \item{label_size}{Numeric (default 2) the size of edge labels}
+
+\item{clip}{Numeric or NULL (default NULL). The "level" of the hypercube below which transitions should not be plotted. Use to focus only on early transitions.}
 }
 \value{
 A ggplot object
