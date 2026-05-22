@@ -122,6 +122,12 @@ ordering_matrix = function(fit, n.samples = 10000,
         adds = which(state.v == 0 & nextstate.v == 1)
         if(length(adds) != 0) {
           abs.mat[adds,1:(level+1)] = abs.mat[adds,1:(level+1)]+1
+          if(FALSE & length(adds) > 1) {
+            start.l = min(level+1+1, fit.rev$L)
+            end.l = min(level+1+length(adds), fit.rev$L)
+            abs.mat[adds,start.l:end.l] = abs.mat[adds,start.l:end.l]+1/length(adds)
+            count = count + 1/length(adds)
+          }
           b4m[ones,adds] = b4m[ones,adds]+1
           count = count+1
         }
