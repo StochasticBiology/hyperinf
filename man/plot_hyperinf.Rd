@@ -9,7 +9,8 @@ plot_hyperinf(
   plot.type = "",
   threshold = 0.05,
   uncertainty = "",
-  feature.names = TRUE
+  feature.names = TRUE,
+  clip = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ plot_hyperinf(
 \item{uncertainty}{Boolean, whether to visualise uncertainty over bootstraps (only for HyperLAU and HyperHMM)}
 
 \item{feature.names}{Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.}
+
+\item{clip}{Numeric or NULL (default NULL). The "level" of the hypercube below which transitions should not be plotted. Use to focus only on early transitions.}
 }
 \value{
 A ggplot object

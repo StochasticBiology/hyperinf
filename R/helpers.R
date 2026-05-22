@@ -2,6 +2,10 @@
 #' @export
 hyperdags::fit_properties
 
+#' @importFrom hyperdags simulate_accumulation
+#' @export
+hyperdags::simulate_accumulation
+
 #' Parameteric bootstrap for a HyperMk model fit
 #'
 #' @param fit A fitted HyperMk model (output from hyperinf)

@@ -3,7 +3,7 @@
 #' There are several options here. 
 #' "relative" returns a matrix where P_ij is the proportion of *precursor states* encountered with i and without j. 
 #' "transitions" returns a matrix where P_ij gives the proportion of feature i acquisitions in which feature j is already present. 
-#' "absolute" returns a matrix where P_ij is the probability, across *precursor states*, that feature i is acquired after step j (or, for Mk models, after j features are present).
+#' "absolute" returns a matrix where P_ij is the probability, across *precursor states*, that feature i is acquired after at least j features are present.
 #'
 #' There are several ways that models can differ. With "absolute", if there is a >(1-q) probability 
 #' that a feature is acquired before t in model 1, and a <q probability that a feature is acquired 
@@ -46,8 +46,8 @@ ordering_matrix = function(fit, n.samples = 10000,
     fit.rev = fit
     ddf = fit.rev$mk_fluxes
     count = count2 = 0
-    m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
-    b4m = b4m2 = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    abs.mat = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    b4m = rel.mat = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     for(i in 1:n.samples) {
       state = 0
       for(j in 1:fit.rev$L) {
@@ -61,11 +61,13 @@ ordering_matrix = function(fit, n.samples = 10000,
         } else {
           next.trans = sample(outs, 1, prob = ddf$Rate[outs])
         }
+        nextstate = ddf$To[next.trans]
         state.v = DecToBin(state, fit.rev$L)
-        ones = which(state.v==1)
-        zeroes = which(state.v==0)
+        nextstate.v = DecToBin(nextstate, fit.rev$L)
+        ones = which(nextstate.v==1)
+        zeroes = which(nextstate.v==0)
         if(length(ones) > 0 & length(zeroes) > 0) {
-          b4m2[ones, zeroes] = b4m2[ones, zeroes] + 1
+          rel.mat[ones, zeroes] = rel.mat[ones, zeroes] + 1
           count2 = count2 + 1
         }
         level = sum(state.v)
@@ -74,7 +76,7 @@ ordering_matrix = function(fit, n.samples = 10000,
           #if(level == 5 & change == 4) {
           #  cat(state.v, " ", next.trans, "\n")
           #}
-            m[change,1:(level+1)] = m[change,1:(level+1)]+1
+            abs.mat[change,1:(level+1)] = abs.mat[change,1:(level+1)]+1
         
           b4m[ones,change] = b4m[ones,change]+1
           count = count+1
@@ -83,16 +85,16 @@ ordering_matrix = function(fit, n.samples = 10000,
       }
     }
     b4m = b4m/count
-    b4m2 = b4m2/count2
-    rs <- apply(m, 1, max)
-    m <- m / ifelse(rs == 0, 1, rs)
+    rel.mat = rel.mat/count2
+    rs <- apply(abs.mat, 1, max)
+    abs.mat <- abs.mat / ifelse(rs == 0, 1, rs)
   } else if(fit.type == "hypermk2") {
     fit.rev = fit
     ddf = fit.rev$mk2_fluxes
     count = count2 = 0
-    m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    abs.mat = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     b4m = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
-    b4m2 = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
+    rel.mat = matrix(0, nrow=fit.rev$L, ncol=fit.rev$L)
     for(i in 1:n.samples) {
       state = ddf$From[sample(1:nrow(ddf), 1)]
       for(j in 1:(2*fit.rev$L)) {
@@ -106,19 +108,26 @@ ordering_matrix = function(fit, n.samples = 10000,
         } else {
           next.trans = sample(outs, 1, prob = ddf$Rate[outs])
         }
+        nextstate = ddf$To[next.trans]
         state.v = DecToBin(state, fit.rev$L)
-        ones = which(state.v==1)
-        zeroes = which(state.v==0)
+        nextstate.v = DecToBin(nextstate, fit.rev$L)
+        ones = which(nextstate.v==1)
+        zeroes = which(nextstate.v==0)
         if(length(ones) > 0 & length(zeroes) > 0) {
-          b4m2[ones, zeroes] = b4m2[ones, zeroes] + 1
+          rel.mat[ones, zeroes] = rel.mat[ones, zeroes] + 1
           count2 = count2 + 1
         }
         level = sum(state.v)
-        nextstate = ddf$To[next.trans]
-        nextstate.v = DecToBin(nextstate, fit.rev$L)
+
         adds = which(state.v == 0 & nextstate.v == 1)
         if(length(adds) != 0) {
-             m[adds,1:(level+1)] = m[adds,1:(level+1)]+1
+          abs.mat[adds,1:(level+1)] = abs.mat[adds,1:(level+1)]+1
+          if(FALSE & length(adds) > 1) {
+            start.l = min(level+1+1, fit.rev$L)
+            end.l = min(level+1+length(adds), fit.rev$L)
+            abs.mat[adds,start.l:end.l] = abs.mat[adds,start.l:end.l]+1/length(adds)
+            count = count + 1/length(adds)
+          }
           b4m[ones,adds] = b4m[ones,adds]+1
           count = count+1
         }
@@ -126,9 +135,9 @@ ordering_matrix = function(fit, n.samples = 10000,
       }
     }
     b4m = b4m/count
-    b4m2 = b4m2/count2
-    rs <- apply(m, 1, max)
-    m <- m / ifelse(rs == 0, 1, rs)
+    rel.mat = rel.mat/count2
+    rs <- apply(abs.mat, 1, max)
+    abs.mat <- abs.mat / ifelse(rs == 0, 1, rs)
   } else {
     fit.non.rev = fit
     process.ddf = TRUE
@@ -145,17 +154,17 @@ ordering_matrix = function(fit, n.samples = 10000,
       } else if("routes" %in% names(fit.non.rev)) {
         message("Processing via sampled routes")
         routes_mat = fit.non.rev$routes
-        m = matrix(0, nrow = ncol(routes_mat), ncol = ncol(routes_mat))
-        b4m2 = matrix(0, nrow = ncol(routes_mat), ncol = ncol(routes_mat))
+        abs.mat = matrix(0, nrow = ncol(routes_mat), ncol = ncol(routes_mat))
+        rel.mat = matrix(0, nrow = ncol(routes_mat), ncol = ncol(routes_mat))
         for(i in 1:nrow(routes_mat)) {
           for(j in 1:ncol(routes_mat)) {
             ones = routes_mat[i,1:j]+1
             zeroes = (1:fit.non.rev$L)[-ones]
-            b4m2[ones, zeroes] = b4m2[ones, zeroes] + 1
-                m[routes_mat[i,j]+1, 1:j] = m[routes_mat[i,j]+1,1:j] + 1
+            rel.mat[ones, zeroes] = rel.mat[ones, zeroes] + 1
+            abs.mat[routes_mat[i,j]+1, 1:j] = abs.mat[routes_mat[i,j]+1,1:j] + 1
           }
         }
-        b4m2 = b4m2 / (ncol(routes_mat)*nrow(routes_mat))
+        rel.mat = rel.mat / (ncol(routes_mat)*nrow(routes_mat))
         #m = m/nrow(routes_mat)
         if(type != "transitions") {
           process.ddf = FALSE
@@ -181,36 +190,39 @@ ordering_matrix = function(fit, n.samples = 10000,
         }
       }
       count = count2 = 0
-      m = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
-      b4m = b4m2 = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
+      abs.mat = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
+      b4m = rel.mat = matrix(0, nrow=fit.non.rev$L, ncol=fit.non.rev$L)
       for(i in 1:nrow(ddf)) {
         state = ddf$From[i]
+        nextstate = ddf$To[i]
+        
         state.v = DecToBin(state, fit.non.rev$L)
-        next.state = ddf$To[i]
-        change = fit.non.rev$L - log(next.state-state, base=2)
+        nextstate.v = DecToBin(nextstate, fit.non.rev$L)
+        
+        change = fit.non.rev$L - log(nextstate-state, base=2)
         level = sum(state.v)
-        ones = which(state.v==1)
-        zeroes = which(state.v==0)
+        ones = which(nextstate.v==1)
+        zeroes = which(nextstate.v==0)
         if(length(ones) > 0 & length(zeroes) > 0) {
-          b4m2[ones, zeroes] = b4m2[ones, zeroes] + ddf$Flux[i]
+          rel.mat[ones, zeroes] = rel.mat[ones, zeroes] + ddf$Flux[i]
           count2 = count2 + ddf$Flux[i]
         }
-           m[change,1:(level+1)] = m[change,1:(level+1)]+ddf$Flux[i]
+        abs.mat[change,1:(level+1)] = abs.mat[change,1:(level+1)]+ddf$Flux[i]
         b4m[ones,change] =  b4m[ones,change] + ddf$Flux[i]
       }
-      b4m2 = b4m2 / count2
+      rel.mat = rel.mat / count2
     }
     
-    rs <- apply(m, 1, max)
-    m <- m / ifelse(rs == 0, 1, rs)
+    rs <- apply(abs.mat, 1, max)
+    abs.mat <- abs.mat / ifelse(rs == 0, 1, rs)
     
   }
   if(type == "relative") {
-    return(b4m2)
+    return(rel.mat)
   } else if(type == "transitions") {
     return(b4m)
   } else {
-    return(m)
+    return(abs.mat)
   }
 }
 
@@ -378,8 +390,8 @@ plot_hyperinf_ordering_matrices = function(fits,
   # convert matrix to dataframe
   mat_to_df <- function(mat, type) {
     expand.grid(
-      x = seq_len(ncol(mat)),
-      y = seq_len(nrow(mat))
+      y = seq_len(ncol(mat)),
+      x = seq_len(nrow(mat))
     ) |>
       transform(
         value = as.vector(mat),
@@ -391,6 +403,7 @@ plot_hyperinf_ordering_matrices = function(fits,
   df = data.frame()
   for(i in 1:length(fits)) {
     m[[i]] = ordering_matrix(fits[[i]], type=type) 
+   
     tmp = mat_to_df(m[[i]], i)
     df = rbind(df, tmp)
   }
@@ -447,7 +460,7 @@ plot_hyperinf_ordering_matrices = function(fits,
     ggplot2::theme_minimal() 
   
   if(type == "relative") {
-    this.plot = this.plot + ggplot2::labs(fill = "Experiment", x = "Feature present", y = "Feature absent")
+    this.plot = this.plot + ggplot2::labs(fill = "Experiment", x = "Feature absent", y = "Feature present")
   } else {
     this.plot = this.plot + ggplot2::labs(fill = "Experiment", x = "At least n prior acquisitions?", y = "New acquisition")
   }

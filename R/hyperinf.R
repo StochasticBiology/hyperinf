@@ -524,6 +524,7 @@ compute_hypertraps_fluxes = function(my.post,
 #' @param threshold Double (default 0.05), probability flux below which edges will not be plotted
 #' @param uncertainty Boolean, whether to visualise uncertainty over bootstraps (only for HyperLAU and HyperHMM)
 #' @param feature.names Boolean or character vector (default TRUE). If TRUE, use feature names from fit. If FALSE, use numerical labels. If vector of length L, use those labels.
+#' @param clip Numeric or NULL (default NULL). The "level" of the hypercube below which transitions should not be plotted. Use to focus only on early transitions.
 #'
 #' @return A ggplot object
 #' @examples
@@ -535,7 +536,8 @@ plot_hyperinf = function(fit,
                          plot.type = "",
                          threshold = 0.05,
                          uncertainty = "",
-                         feature.names = TRUE) {
+                         feature.names = TRUE,
+                         clip = NULL) {
   fit.type = hyperinf_gettype(fit)
   if(is.null(fit.type)) {
     return(ggplot2::ggplot())
@@ -586,7 +588,7 @@ plot_hyperinf = function(fit,
       out.plot = ggplot2::ggplot()
     }
   } else {
-    tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold, feature.names)
+    tmp1 = get_plot_graph(fit, fit.type, uncertainty, reversible, threshold, feature.names, clip)
     plot.graph = tmp1[["plot.graph"]]
     layers = tmp1[["layers"]]
     fluxes = tmp1[["fluxes"]]
@@ -595,8 +597,21 @@ plot_hyperinf = function(fit,
   if(any(fluxes$From > fluxes$To)) {
     reversible = TRUE
   }
+  
+  if(!is.null(clip)) {
+    plot.graph <- plot.graph - igraph::V(plot.graph)[layers[name] > clip]
+    layers = layers[layers <= clip]
+  }
+  
+  layout <- igraph::layout_with_sugiyama(
+    plot.graph,
+    layers = layers[igraph::V(plot.graph)$name]   
+  )
+  
+  coords <- layout$layout
+  
   if(reversible) {
-    out.plot=  ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+    out.plot=  ggraph::ggraph(plot.graph, layout = "manual", x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_arc(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label, circular = FALSE),
                             strength = 0.05,
                             label_size = 3, label_colour="black", color="#AAAAFF",
@@ -607,7 +622,7 @@ plot_hyperinf = function(fit,
     library(ggraph)
     cvs = fluxes$FluxSD/fluxes$Flux
     maxcv = max( max(cvs), 0.5 )
-    out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+    out.plot = ggraph::ggraph(plot.graph, layout = "manual", x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_color=FluxSD/Flux, label=label),
                              label_size = 3, label_colour="black",
                              label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +
@@ -615,7 +630,7 @@ plot_hyperinf = function(fit,
       ggraph::scale_edge_color_gradient(name = "CV", low = "#AAAAFF", high = "#FFAAAA", na.value = "lightgrey", limits=c(0,maxcv)) +
       ggraph::theme_graph(base_family="sans")
   } else {
-    out.plot = ggraph::ggraph(plot.graph, layout="sugiyama", layers=layers) +
+    out.plot = ggraph::ggraph(plot.graph, layout = "manual", x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_link(ggplot2::aes(edge_width=Flux, edge_alpha=Flux, label=label),
                              label_size = 3, label_colour="black", color="#AAAAFF",
                              label_parse = FALSE, angle_calc = "along", check_overlap = TRUE) +
