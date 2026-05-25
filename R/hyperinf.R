@@ -118,7 +118,7 @@ hyperinf <- function(data,
   }
   if(is.matrix(data) & !is.null(tree)) {
     if(is.null(rownames(data))) {
-      if(method != "hypermk2") {
+      if(method != "hypermk2" & method != "hypermk") {
         message("You've given me a matrix without rownames and a tree, but to use tree-linked data I need a dataframe with IDs in the first column!")
         tree = NULL
         Sys.sleep(3)
@@ -157,7 +157,7 @@ hyperinf <- function(data,
       }
       message("More tree tips than observations... dropping those without records.")
     }
-    # arrange the matrix's rows in the order corresponding to the tree's tips (for HyperMk2)
+    # arrange the matrix's rows in the order corresponding to the tree's tips (for HyperMk2 & HyperMk)
     mat = mat[match(tree$tip.label, df$ID), ]
     if(any(mat == 2) | any(mat == -1)) {
       it = TRUE
