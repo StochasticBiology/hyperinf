@@ -239,7 +239,7 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   edges = dplyr::bind_rows(es)
   edges = edges[edges$Flux > threshold,]
   
-  edges$label[duplicated(edges[,c("from", "to", "src")])] = ""
+  edges$label[duplicated(edges[,c("from", "to")])] = ""
   edges <- edges[order(edges$label == "", na.last = TRUE), ]
   
   if(style == "limited") {
