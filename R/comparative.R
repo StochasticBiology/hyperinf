@@ -37,8 +37,8 @@ hyperinf_bubbles = function(fit) {
     bins = sapply(c.df$From, DecToBin, len=fit$L)
     c.df$level = colSums(bins)
     bp.tmp = data.frame(feature=c.df$change,
-                    order=c.df$level+1,
-                    prob=c.df$Flux)
+                        order=c.df$level+1,
+                        prob=c.df$Flux)
     bp = bp.tmp[!duplicated(bp.tmp[,1:2]),1:2]
     bp$prob = 0
     for(i in 1:nrow(bp.tmp)) {
@@ -102,8 +102,8 @@ plot_hyperinf_bubbles = function(fits,
     }
   }
   fits = use.fits
-
-#  expt.refs = 1:length(fits)
+  
+  #  expt.refs = 1:length(fits)
   if (bins == 0) {
     toplot = data.frame()
     for (i in 1:length(fits)) {
@@ -192,6 +192,7 @@ plot_hyperinf_bubbles = function(fits,
 #' @param bend Numeric (default 0.5) the strength of the bend separating edges between the same pair of nodes
 #' @param label_size Numeric (default 2) the size of edge labels
 #' @param clip Numeric or NULL (default NULL). The "level" of the hypercube below which transitions should not be plotted. Use to focus only on early transitions.
+#' @param check.overlap Boolean (default TRUE) whether to prevent edge label overlaps
 #'
 #' @return A ggplot object
 #' @examples
@@ -206,7 +207,8 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
                                      style="limited",
                                      bend = 0.5,
                                      label_size = 2,
-                                     clip = NULL) {
+                                     clip = NULL,
+                                     check.overlap = check.overlap) {
   library(ggraph)
   plot.graphs = layers = es = list()
   i = 1
@@ -236,32 +238,26 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   }
   edges = dplyr::bind_rows(es)
   edges = edges[edges$Flux > threshold,]
-  if(FALSE) {
-    if(length(feature.names) > 0) {
-    if(is.numeric(edges$Changes[1])) {
-      edges$label = paste("+", feature.names[edges$Change], sep="")    
-    } else {
-      edges$label = paste("+", edges$Change, sep="")    
-    }
-    }
-  }
+  
+  edges$label[duplicated(edges[,c("from", "to", "src")])] = ""
+  edges <- edges[order(edges$label == "", na.last = TRUE), ]
   
   if(style == "limited") {
-  uniques = which(!duplicated(edges[,c("from", "to", "src")]))
-  new.edges = data.frame()
-  for(u in uniques) {
-    tmp = edges[u,]
-    tmp.set = which(edges$from==tmp$from &
-                      edges$to==tmp$to &
-                      edges$src==tmp$src)
-    new.edges = rbind(new.edges, data.frame(from=tmp$from,
-                                            to=tmp$to,
-                                            src=tmp$src,
-                                            label=tmp$label,
-                                            nboot=length(tmp.set),
-                                            mean=mean(edges$Flux[tmp.set])))
-  }
-  new.edges$label[new.edges$nboot < 2] = ""
+    uniques = which(!duplicated(edges[,c("from", "to", "src")]))
+    new.edges = data.frame()
+    for(u in uniques) {
+      tmp = edges[u,]
+      tmp.set = which(edges$from==tmp$from &
+                        edges$to==tmp$to &
+                        edges$src==tmp$src)
+      new.edges = rbind(new.edges, data.frame(from=tmp$from,
+                                              to=tmp$to,
+                                              src=tmp$src,
+                                              label=tmp$label,
+                                              nboot=length(tmp.set),
+                                              mean=mean(edges$Flux[tmp.set])))
+    }
+    #new.edges$label[new.edges$nboot < 2] = ""
   }
   
   u.layers = which(!duplicated(names(unlist(layers))))
@@ -289,20 +285,22 @@ plot_hyperinf_comparative = function(fits, threshold=0.05,
   coords <- layout$layout
   
   if(style == "limited") {
-  g.plot = ggraph::ggraph(g_combined, layout = "manual", x = coords[,1], y = coords[,2]) +
-    ggraph::geom_edge_fan(ggplot2::aes(
-      edge_width = mean,
-      edge_alpha = nboot,
-      color = Experiment,
-      label=label,
-    ),
-    strength = bend, check_overlap=TRUE, label_size=label_size
-    ) +
-    ggraph::scale_edge_width(range = c(0.1, 4)) +
-    ggraph::scale_edge_alpha(range = c(0, 0.4)) +
-    ggraph::theme_graph(base_family = "sans") 
+    g.plot = ggraph::ggraph(g_combined, layout = "manual", 
+                            x = coords[,1], y = coords[,2]) +
+      ggraph::geom_edge_fan(ggplot2::aes(
+        edge_width = mean,
+        edge_alpha = nboot,
+        color = Experiment,
+        label=label,
+      ),
+      strength = bend, check_overlap=TRUE, label_size=label_size
+      ) +
+      ggraph::scale_edge_width(range = c(0.1, 4)) +
+      ggraph::scale_edge_alpha(range = c(0, 0.4)) +
+      ggraph::theme_graph(base_family = "sans") 
   } else {
-    g.plot = ggraph::ggraph(g_combined, layout = "manual", x = coords[,1], y = coords[,2]) +
+    g.plot = ggraph::ggraph(g_combined, layout = "manual", 
+                            x = coords[,1], y = coords[,2]) +
       ggraph::geom_edge_fan(ggplot2::aes(
         edge_width = Flux,
         edge_alpha = Flux,
@@ -331,11 +329,11 @@ plot_hyperinf_bootstrap = function(fit.1, fit.2, ...) {
     message("This doesn't look like a comparable pair of model fits")
     return(ggplot2::ggplot())
   }
-
+  
   boots = list()
   boots = c(boots, fit.1$boots)
   boots = c(boots, fit.2$boots)
-
+  
   bub.set = lapply(boots, hyperinf_bubbles)
   groups = c(rep(1, length(fit.1$boots)), rep(2, length(fit.2$boots)))
   sum.set = list()
@@ -360,7 +358,7 @@ plot_hyperinf_bootstrap = function(fit.1, fit.2, ...) {
     g2 = sum.df[sum.df$g==2 & sum.df$feature==m$feature[i] & sum.df$order==m$order[i],]
     if(g1$min > g2$max | g1$max < g2$min) { m$sig[i] = 1 }
   }
-
+  
   plot_hyperinf_bubbles(list(fit.1, fit.2), ...) + 
     ggplot2::geom_point(data=m[m$sig==1,], ggplot2::aes(x=order, y=feature+0.15, group=1, fill="no\noverlap"), shape="*", size=12) 
 }
