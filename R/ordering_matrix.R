@@ -275,6 +275,28 @@ compare_orderings = function(fit.1, fit.2,
                              percentile = 0.2,
                              type = "relative") {
   oms.1 = oms.2 = list()
+  if(length(unique(fit.1$transitions$Bootstrap)) > 1) {
+    message("Unpacking and using serial bootstraps")
+    fit.1$boots = list()
+    i = 1
+    for(boot in unique(fit.1$transitions$Bootstrap)) {
+      fit.1$boots[[i]] = fit.1[names(fit.1) != "boots"]
+      fit.1$boots[[i]]$transitions = fit.1$transitions[fit.1$transitions$Bootstrap == boot,]
+      fit.1$boots[[i]]$transitions$Bootstrap = 0
+      i = i+1
+    }
+  }
+  if(length(unique(fit.2$transitions$Bootstrap)) > 1) {
+    message("Unpacking and using serial bootstraps")
+    fit.2$boots = list()
+    i = 1
+    for(boot in unique(fit.2$transitions$Bootstrap)) {
+      fit.2$boots[[i]] = fit.2[names(fit.2) != "boots"]
+      fit.2$boots[[i]]$transitions = fit.2$transitions[fit.2$transitions$Bootstrap == boot,]
+      fit.2$boots[[i]]$transitions$Bootstrap = 0
+      i = i+1
+    }
+  }
   if(!("boots" %in% names(fit.1) & "boots" %in% names(fit.2))) {
     message("Didn't find bootstrap resamples in these fits")
     return(NULL)
