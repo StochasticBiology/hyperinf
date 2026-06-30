@@ -32,7 +32,7 @@
 #' ordering_matrix(fit.1, type="absolute")
 #' @export
 ordering_matrix = function(fit, n.samples = 10000,
-                           type = "relative") {
+                           type = "transitions") {
   fit.type = hyperinf_gettype(fit)
   if(is.null(fit.type)) {
     return(ggplot2::ggplot())
@@ -84,7 +84,7 @@ ordering_matrix = function(fit, n.samples = 10000,
         state = ddf$To[next.trans]
       }
     }
-    b4m = b4m/count
+    #b4m = b4m/count
     rel.mat = rel.mat/count2
     rs <- apply(abs.mat, 1, max)
     abs.mat <- abs.mat / ifelse(rs == 0, 1, rs)
@@ -134,7 +134,7 @@ ordering_matrix = function(fit, n.samples = 10000,
         state = ddf$To[next.trans]
       }
     }
-    b4m = b4m/count
+    #b4m = b4m/count
     rel.mat = rel.mat/count2
     rs <- apply(abs.mat, 1, max)
     abs.mat <- abs.mat / ifelse(rs == 0, 1, rs)
@@ -220,6 +220,10 @@ ordering_matrix = function(fit, n.samples = 10000,
   if(type == "relative") {
     return(rel.mat)
   } else if(type == "transitions") {
+    for(i in 1:ncol(b4m)) {
+      b4m[,i] = b4m[,i]/b4m[i,i]
+      b4m[i,i] = 0
+    }
     return(b4m)
   } else {
     return(abs.mat)
@@ -275,6 +279,28 @@ compare_orderings = function(fit.1, fit.2,
                              percentile = 0.2,
                              type = "relative") {
   oms.1 = oms.2 = list()
+  if(length(unique(fit.1$transitions$Bootstrap)) > 1) {
+    message("Unpacking and using serial bootstraps")
+    fit.1$boots = list()
+    i = 1
+    for(boot in unique(fit.1$transitions$Bootstrap)) {
+      fit.1$boots[[i]] = fit.1[names(fit.1) != "boots"]
+      fit.1$boots[[i]]$transitions = fit.1$transitions[fit.1$transitions$Bootstrap == boot,]
+      fit.1$boots[[i]]$transitions$Bootstrap = 0
+      i = i+1
+    }
+  }
+  if(length(unique(fit.2$transitions$Bootstrap)) > 1) {
+    message("Unpacking and using serial bootstraps")
+    fit.2$boots = list()
+    i = 1
+    for(boot in unique(fit.2$transitions$Bootstrap)) {
+      fit.2$boots[[i]] = fit.2[names(fit.2) != "boots"]
+      fit.2$boots[[i]]$transitions = fit.2$transitions[fit.2$transitions$Bootstrap == boot,]
+      fit.2$boots[[i]]$transitions$Bootstrap = 0
+      i = i+1
+    }
+  }
   if(!("boots" %in% names(fit.1) & "boots" %in% names(fit.2))) {
     message("Didn't find bootstrap resamples in these fits")
     return(NULL)
@@ -383,10 +409,10 @@ plot_hyperinf_ordering_matrices = function(fits,
   if("L" %in% names(fits)) {
     fits = list(fits)
   }
-  if(!(type %in% c("absolute", "relative"))) {
-    message("Only absolute and relative types supported")
-    return(ggplot2::ggplot())
-  }
+ # if(!(type %in% c("absolute", "relative"))) {
+#    message("Only absolute and relative types supported")
+#    return(ggplot2::ggplot())
+#  }
   # convert matrix to dataframe
   mat_to_df <- function(mat, type) {
     expand.grid(
@@ -459,7 +485,7 @@ plot_hyperinf_ordering_matrices = function(fits,
     ggplot2::coord_equal() +
     ggplot2::theme_minimal() 
   
-  if(type == "relative") {
+  if(type %in% c("relative", "transitions")) {
     this.plot = this.plot + ggplot2::labs(fill = "Experiment", x = "Feature absent", y = "Feature present")
   } else {
     this.plot = this.plot + ggplot2::labs(fill = "Experiment", x = "At least n prior acquisitions?", y = "New acquisition")
