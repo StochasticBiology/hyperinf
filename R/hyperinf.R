@@ -237,7 +237,7 @@ hyperinf <- function(data,
   }
   
   if(!is.null(tree)) {
-    if(any(c.tree$srcs == 2) & !method %in% c("pli", "hyperlau", "hypermk2)) {
+    if(any(c.tree$srcs == 2) & !method %in% c("pli", "hyperlau", "hypermk2")) {
       message("Only HyperMk2, HyperLAU and phenotype landscape inference can deal with uncertain ancestors.")
       if(L < 8) {
         message("Switching to HyperLAU. Pausing in case you want to break...")
